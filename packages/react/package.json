@@ -1,0 +1,20 @@
+{
+  "name": "@channel-state/react",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  },
+  "dependencies": {
+    "@channel-state/core": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format cjs,esm"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8"
+  },
+  "pnpm": {}
+}

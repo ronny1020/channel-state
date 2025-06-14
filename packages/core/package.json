@@ -1,0 +1,19 @@
+{
+  "name": "@channel-state/core",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs"
+  },
+  "devDependencies": {
+    "tsup": "^7.3.0"
+  }
+}
