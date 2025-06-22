@@ -1,17 +1,32 @@
 {
   "name": "@channel-state/angular",
-  "version": "0.1.0",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "peerDependencies": {
-    "@angular/core": "^16.0.0",
-    "rxjs": "^7.0.0"
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rimraf dist",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@channel-state/core": "*"
+    "@channel-state/core": "workspace:*"
   },
-  "scripts": {
-    "build": "tsup src/index.ts --dts --format cjs,esm"
+  "peerDependencies": {
+    "@angular/core": ">=15.0.0"
+  },
+  "devDependencies": {
+    "@angular/core": "^17.0.0"
   }
 }
