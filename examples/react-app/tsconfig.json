@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "paths": {
+      "@channel-state/core": ["../../packages/core/dist"],
+      "@channel-state/react": ["../../packages/react/dist"]
+    }
+  },
+  "include": ["src"]
+}

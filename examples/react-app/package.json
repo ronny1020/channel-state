@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json"
   },
   "dependencies": {
     "@channel-state/core": "workspace:*",

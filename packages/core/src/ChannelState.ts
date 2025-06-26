@@ -1,26 +1,31 @@
 type StoreChangeCallback = () => void
 
-interface ChannelStoreOptions<T extends Record<string, any>> {
+interface ChannelStoreOptions<T> {
   name: string // required
   persist?: boolean // default true
   initial: T // required
 }
 
-export class ChannelStore<T extends Record<string, any>> {
+export class ChannelStore<T> {
   private _db: IDBDatabase | null = null
-  private _subscribers = new Map<keyof T, Set<StoreChangeCallback>>()
-  private _cache: Partial<T> = {}
+  private _subscribers = new Set<StoreChangeCallback>()
+  private _cache: T
   private readonly _name: string
   private readonly _persist: boolean
   private readonly _initial: T
   private readonly _channel: BroadcastChannel
+  private readonly _dbKey = 'state' // Fixed key for storing the single state object
+  private readonly _prefixedName: string
 
   constructor(options: ChannelStoreOptions<T>) {
     this._name = options.name
     this._persist = options.persist ?? true
     this._initial = options.initial
+    this._prefixedName = `channel-state__${this._name}`
 
-    this._channel = new BroadcastChannel(`__${this._name}`)
+    this._cache = { ...this._initial } // Initialize cache with initial values
+
+    this._channel = new BroadcastChannel(this._prefixedName)
     this._channel.addEventListener('message', this._handleBroadcast)
 
     this._initDB()
@@ -28,17 +33,16 @@ export class ChannelStore<T extends Record<string, any>> {
 
   private _initDB() {
     if (!this._persist) {
-      // Use in-memory cache only; initialize cache with initial values
-      this._cache = { ...this._initial }
+      // Use in-memory cache only; cache already initialized
       return
     }
 
-    const request = indexedDB.open(this._name, 1)
+    const request = indexedDB.open(this._prefixedName, 1)
 
     request.onupgradeneeded = () => {
       const db = request.result
-      if (!db.objectStoreNames.contains(this._name)) {
-        db.createObjectStore(this._name)
+      if (!db.objectStoreNames.contains(this._prefixedName)) {
+        db.createObjectStore(this._prefixedName)
       }
     }
 
@@ -49,130 +53,89 @@ export class ChannelStore<T extends Record<string, any>> {
 
     request.onerror = () => {
       console.error('IndexedDB init failed:', request.error)
-      // fallback to initial values cache
-      this._cache = { ...this._initial }
+      // fallback to initial values cache (already set)
     }
   }
 
   private _loadCacheFromDB() {
     if (!this._db) return
 
-    const tx = this._db.transaction(this._name, 'readonly')
-    const store = tx.objectStore(this._name)
+    const tx = this._db.transaction(this._prefixedName, 'readonly')
+    const store = tx.objectStore(this._prefixedName)
 
-    const keys = Object.keys(this._initial) as (keyof T)[]
-    let loadedCount = 0
-
-    keys.forEach((key) => {
-      const req = store.get(key as string)
-      req.onsuccess = () => {
-        const val = req.result
-        if (val === undefined) {
-          // No stored value, fallback to initial
-          this._cache[key] = this._initial[key]
-          if (this._persist && this._db) {
-            // Save initial value to DB
-            this.set(key, this._initial[key])
-          }
-        } else {
-          this._cache[key] = val
+    const req = store.get(this._dbKey)
+    req.onsuccess = () => {
+      const val = req.result
+      if (val === undefined) {
+        // No stored value, fallback to initial
+        this._cache = { ...this._initial }
+        if (this._persist && this._db) {
+          // Save initial value to DB
+          this.set(this._initial)
         }
-        loadedCount++
-        if (loadedCount === keys.length) {
-          // All keys loaded, optionally notify subscribers here if needed
-        }
+      } else {
+        this._cache = val
       }
-      req.onerror = () => {
-        this._cache[key] = this._initial[key]
-        loadedCount++
-      }
-    })
-  }
-
-  private _handleBroadcast = (e: MessageEvent) => {
-    const key = e.data as keyof T
-    this._notifySubscribers(key)
-  }
-
-  private _notifySubscribers(key: keyof T) {
-    const subs = this._subscribers.get(key)
-    if (subs) {
-      for (const cb of subs) cb()
+      this._notifySubscribers()
+    }
+    req.onerror = () => {
+      this._cache = { ...this._initial }
+      this._notifySubscribers()
     }
   }
 
-  private _triggerChange(key: keyof T) {
-    this._channel.postMessage(key)
-    this._notifySubscribers(key)
+  private _handleBroadcast = (e: MessageEvent) => {
+    // Message indicates a state change, no specific key
+    if (e.data === 'state-change') {
+      this._notifySubscribers()
+    }
+  }
+
+  private _notifySubscribers() {
+    for (const cb of this._subscribers) cb()
+  }
+
+  private _triggerChange() {
+    this._channel.postMessage('state-change')
+    this._notifySubscribers()
   }
 
   /**
    * Synchronous getter from cache
    */
-  get<K extends keyof T>(key: K): T[K] {
-    if (key in this._cache) {
-      return this._cache[key] as T[K]
-    }
-    // fallback if cache is empty for some reason
-    return this._initial[key]
+  get(): T {
+    return this._cache
   }
 
   /**
    * Set value, update cache and optionally IndexedDB asynchronously
    */
-  async set<K extends keyof T>(key: K, value: T[K]): Promise<void> {
-    this._cache[key] = value
+  async set(value: T): Promise<void> {
+    this._cache = value
 
     if (!this._persist || !this._db) {
-      this._triggerChange(key)
+      this._triggerChange()
       return
     }
 
     return new Promise((resolve, reject) => {
-      const tx = this._db!.transaction(this._name, 'readwrite')
-      const store = tx.objectStore(this._name)
-      const req = store.put(value, key as string)
+      const tx = this._db!.transaction(this._prefixedName, 'readwrite')
+      const store = tx.objectStore(this._prefixedName)
+      const req = store.put(value, this._dbKey)
 
       req.onsuccess = () => {
-        this._triggerChange(key)
+        this._triggerChange()
         resolve()
       }
       req.onerror = () => reject(req.error)
     })
   }
 
-  async delete<K extends keyof T>(key: K): Promise<void> {
-    delete this._cache[key]
-
-    if (!this._persist || !this._db) {
-      this._triggerChange(key)
-      return
-    }
-
-    return new Promise((resolve, reject) => {
-      const tx = this._db!.transaction(this._name, 'readwrite')
-      const store = tx.objectStore(this._name)
-      const req = store.delete(key as string)
-
-      req.onsuccess = () => {
-        this._triggerChange(key)
-        resolve()
-      }
-      req.onerror = () => reject(req.error)
-    })
-  }
-
-  subscribe<K extends keyof T>(
-    key: K,
-    callback: StoreChangeCallback,
-  ): () => void {
-    if (!this._subscribers.has(key)) {
-      this._subscribers.set(key, new Set())
-    }
-    this._subscribers.get(key)!.add(callback)
+  subscribe(callback: StoreChangeCallback): () => void {
+    this._subscribers.add(callback)
 
     return () => {
-      this._subscribers.get(key)!.delete(callback)
+      this._subscribers.delete(callback)
     }
   }
 

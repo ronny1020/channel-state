@@ -17,6 +17,7 @@
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs",
     "dev": "tsup src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json"
   }
 }
