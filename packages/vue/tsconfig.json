@@ -1,12 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "composite": true,
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@channel-state/core": ["../core/src"]
+      "@channel-state/core": ["../core/dist"]
     }
   },
   "include": ["src/**/*"],

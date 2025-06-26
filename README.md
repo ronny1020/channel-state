@@ -153,7 +153,7 @@ import { ChannelStore } from '@channel-state/core'
 
 const countStore = new ChannelStore({
   name: 'count',
-  initial: { value: 0 },
+  initial: 0,
 });
 
 export default function App() {
@@ -163,8 +163,8 @@ export default function App() {
     <div>
        <h1>React App Example</h1>
 
-        <p>Count: {state.value ?? 0}</p>
-        <button onClick={() => setState({ value: (state.value ?? 0) + 1 })}>
+        <p>Count: {state ?? 0}</p>
+        <button onClick={() => setState((state ?? 0) + 1)}>
           Increment
         </button>
     </div>
@@ -179,26 +179,22 @@ export default function App() {
 import { useChannelState } from '@channel-state/vue'
 import { ChannelStore } from '@channel-state/core'
 
-interface State {
-  count: number
-}
-
-const countStore = new ChannelStore<State>({
+const countStore = new ChannelStore<number>({
   name: 'count',
-  initial: { count: 0 },
+  initial: 0,
 })
 
-const [state, setState] = useChannelState(countStore)
+const state = useChannelState(countStore)
 
 const increment = () => {
-  setState({ count: state.value.count + 1 })
+  state.value = state.value + 1
 }
 </script>
 
 <template>
   <div>
     <h1>Vue App</h1>
-    <button @click="increment()">Increment: {{ state.value.count }}</button>
+    <button @click="increment()">Increment: {{ state }}</button>
   </div>
 </template>
 ```

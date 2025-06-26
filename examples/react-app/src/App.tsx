@@ -5,7 +5,7 @@ import { ChannelStore } from '@channel-state/core';
 
 const countStore = new ChannelStore({
   name: 'count',
-  initial: { value: 0 },
+  initial: 0,
 });
 
 export default function App() {
@@ -15,8 +15,8 @@ export default function App() {
     <div>
        <h1>React App Example</h1>
       
-        <p>Count: {state.value ?? 0}</p>
-        <button onClick={() => setState({ value: (state.value ?? 0) + 1 })}>
+        <p>Count: {state ?? 0}</p>
+        <button onClick={() => setState((state ?? 0) + 1)}>
           Increment
         </button>      
     </div>
