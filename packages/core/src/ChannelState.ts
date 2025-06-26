@@ -41,7 +41,7 @@ export class ChannelStore<T> {
   private readonly _dbKey = 'state' // Fixed key for storing the single state object
   private readonly _prefixedName: string
   private _instanceId: string
-  private _isInitialized: boolean = false
+  private _isInitialized: boolean = false // Test comment
 
   /**
    * Creates an instance of ChannelStore.

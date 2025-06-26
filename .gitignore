@@ -2,6 +2,8 @@ node_modules
 */node_modules
 dist
 build
+tsinfobuild
+tsconfig.tsbuildinfo
 .DS_Store
 *.log
 tmp
