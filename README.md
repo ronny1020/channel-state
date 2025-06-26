@@ -6,8 +6,9 @@
 
 - **Cross-framework compatibility**: Wrappers for React, Vue, and Angular.
 - **Same-domain sharing**: Works across apps on the same origin (even in different iframes).
-- **Live sync**: State updates in one framework notify others via `storage` or `BroadcastChannel` fallback.
+- **Live sync**: State updates in one framework notify others via `BroadcastChannel`.
 - **Persistent**: Uses IndexedDB as the primary backend for persistent storage.
+- **Single State Object**: Manages a single state object, not individual key-value pairs.
 - **React 18-ready**: Uses `useSyncExternalStore` for concurrent-safe updates.
 - **Offline-first**: Works offline and after reload.
 
@@ -48,12 +49,6 @@ channel-state/
     │   ├── src/
     │   │   ├── index.ts
     │   │   └── useChannelState.ts
-    │   ├── package.json
-    │   └── tsconfig.json
-    ├── angular/               # Angular service wrapper
-    │   ├── src/
-    │   │   ├── index.ts
-    │   │   └── ChannelStateService.ts
     │   ├── package.json
     │   └── tsconfig.json
 ```
@@ -154,15 +149,26 @@ Each package will extend this config.
 
 ```tsx
 import { useChannelState } from '@channel-state/react'
+import { ChannelStore } from '@channel-state/core'
+
+const countStore = new ChannelStore({
+  name: 'count',
+  initial: { value: 0 },
+});
 
 export default function App() {
-  const [count, setCount] = useChannelState('counter', 0)
+  const [state, setState] = useChannelState(countStore);
+
   return (
     <div>
-      <h1>React App</h1>
-      <button onClick={() => setCount(count + 1)}>Increment: {count}</button>
+       <h1>React App Example</h1>
+
+        <p>Count: {state.value ?? 0}</p>
+        <button onClick={() => setState({ value: (state.value ?? 0) + 1 })}>
+          Increment
+        </button>
     </div>
-  )
+  );
 }
 ```
 
@@ -171,45 +177,33 @@ export default function App() {
 ```vue
 <script setup lang="ts">
 import { useChannelState } from '@channel-state/vue'
+import { ChannelStore } from '@channel-state/core'
 
-const [count, setCount] = useChannelState('counter', 0)
+interface State {
+  count: number
+}
+
+const countStore = new ChannelStore<State>({
+  name: 'count',
+  initial: { count: 0 },
+})
+
+const [state, setState] = useChannelState(countStore)
+
+const increment = () => {
+  setState({ count: state.value.count + 1 })
+}
 </script>
 
 <template>
   <div>
     <h1>Vue App</h1>
-    <button @click="setCount(count + 1)">Increment: {{ count }}</button>
+    <button @click="increment()">Increment: {{ state.value.count }}</button>
   </div>
 </template>
 ```
 
-### Angular
 
-```ts
-import { Component } from '@angular/core'
-import { ChannelStateService } from '@channel-state/angular'
-
-@Component({
-  selector: 'app-root',
-  template: `
-    <h1>Angular App</h1>
-    <button (click)="increment()">Increment: {{ counter }}</button>
-  `,
-})
-export class AppComponent {
-  counter = 0
-
-  constructor(private state: ChannelStateService) {
-    this.state.useChannelState<number>('counter', 0).subscribe((value) => {
-      this.counter = value
-    })
-  }
-
-  increment() {
-    this.state.set<number>('counter', this.counter + 1)
-  }
-}
-```
 
 ## Development Workflow
 

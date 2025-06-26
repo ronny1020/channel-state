@@ -85,10 +85,9 @@ export class ChannelStore<T> {
   }
 
   private _handleBroadcast = (e: MessageEvent) => {
-    // Message indicates a state change, no specific key
-    if (e.data === 'state-change') {
-      this._notifySubscribers()
-    }
+    // Update cache directly with received data
+    this._cache = e.data
+    this._notifySubscribers()
   }
 
   private _notifySubscribers() {
@@ -96,7 +95,7 @@ export class ChannelStore<T> {
   }
 
   private _triggerChange() {
-    this._channel.postMessage('state-change')
+    this._channel.postMessage(this._cache)
     this._notifySubscribers()
   }
 
