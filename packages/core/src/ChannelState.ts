@@ -1,13 +1,13 @@
 /**
  * Callback function type for store changes.
  */
-type StoreChangeCallback = () => void
+type StoreChangeCallback<T> = (value: T) => void
 
 /**
  * Options for configuring a ChannelStore instance.
  * @template T The type of the state managed by the store.
  */
-interface ChannelStoreOptions<T> {
+export interface ChannelStoreOptions<T> {
   /**
    * The name of the channel. This is used for both BroadcastChannel and IndexedDB.
    * @remarks Required.
@@ -32,14 +32,16 @@ interface ChannelStoreOptions<T> {
  */
 export class ChannelStore<T> {
   private _db: IDBDatabase | null = null
-  private _subscribers = new Set<StoreChangeCallback>()
-  private _cache: T
+  private _subscribers = new Set<StoreChangeCallback<T>>()
+  private _value: T
   private readonly _name: string
   private readonly _persist: boolean
   private readonly _initial: T
   private readonly _channel: BroadcastChannel
   private readonly _dbKey = 'state' // Fixed key for storing the single state object
   private readonly _prefixedName: string
+  private _instanceId: string
+  private _isInitialized: boolean = false
 
   /**
    * Creates an instance of ChannelStore.
@@ -50,25 +52,21 @@ export class ChannelStore<T> {
     this._persist = options.persist ?? false
     this._initial = options.initial
     this._prefixedName = `channel-state__${this._name}`
+    this._instanceId = crypto.randomUUID()
 
-    this._cache = structuredClone(this._initial)
+    this._value = structuredClone(this._initial)
 
     this._channel = new BroadcastChannel(this._prefixedName)
     this._channel.addEventListener('message', this._handleBroadcast)
 
-    this._initDB()
+    if (this._persist) {
+      this._initDB()
+    } else {
+      this._requestInitialStateFromOtherTabs()
+    }
   }
 
-  /**
-   * Initializes the IndexedDB for persistence if `_persist` is true.
-   * @private
-   */
   private _initDB() {
-    if (!this._persist) {
-      // Use in-memory cache only; cache already initialized
-      return
-    }
-
     const request = indexedDB.open(this._prefixedName, 1)
 
     request.onupgradeneeded = () => {
@@ -81,18 +79,15 @@ export class ChannelStore<T> {
     request.onsuccess = () => {
       this._db = request.result
       this._loadCacheFromDB()
+      this._isInitialized = true
     }
 
     request.onerror = () => {
       console.error('IndexedDB init failed:', request.error)
-      // fallback to initial values cache (already set)
+      this._isInitialized = true // Fallback to initial values cache
     }
   }
 
-  /**
-   * Loads the cached state from IndexedDB.
-   * @private
-   */
   private _loadCacheFromDB() {
     if (!this._db) return
 
@@ -103,21 +98,31 @@ export class ChannelStore<T> {
     req.onsuccess = () => {
       const val = req.result
       if (val === undefined) {
-        // No stored value, fallback to initial
-        this._cache = { ...this._initial }
-        if (this._persist && this._db) {
-          // Save initial value to DB
-          this.set(this._initial)
-        }
+        // If no stored value, request from other tabs first
+        this._requestInitialStateFromOtherTabs()
       } else {
-        this._cache = val
+        this._value = val
+        this._notifySubscribers()
+        this._isInitialized = true
       }
-      this._notifySubscribers()
     }
     req.onerror = () => {
-      this._cache = { ...this._initial }
-      this._notifySubscribers()
+      // If IndexedDB read fails, request from other tabs
+      this._requestInitialStateFromOtherTabs()
     }
+  }
+
+  private _requestInitialStateFromOtherTabs() {
+    this._channel.postMessage({
+      type: 'STATE_REQUEST',
+      senderId: this._instanceId,
+    })
+
+    setTimeout(() => {
+      if (!this._isInitialized) {
+        this._notifySubscribers()
+      }
+    }, 500) // Wait for 500ms for a response
   }
 
   /**
@@ -126,9 +131,23 @@ export class ChannelStore<T> {
    * @private
    */
   private _handleBroadcast = (e: MessageEvent) => {
-    // Update cache directly with received data
-    this._cache = e.data
-    this._notifySubscribers()
+    const message = e.data
+
+    if (message.senderId === this._instanceId) {
+      return // Ignore messages from self
+    }
+
+    if (message.type === 'STATE_REQUEST') {
+      this._channel.postMessage({
+        type: 'STATE_UPDATE',
+        payload: this._value,
+        senderId: this._instanceId,
+      })
+    } else if (message.type === 'STATE_UPDATE') {
+      this._value = message.payload
+      this._isInitialized = true
+      this._notifySubscribers()
+    }
   }
 
   /**
@@ -136,7 +155,7 @@ export class ChannelStore<T> {
    * @private
    */
   private _notifySubscribers() {
-    for (const cb of this._subscribers) cb()
+    this._subscribers.forEach((subscriber) => subscriber(this._value))
   }
 
   /**
@@ -145,7 +164,11 @@ export class ChannelStore<T> {
    * @private
    */
   private _triggerChange() {
-    this._channel.postMessage(this._cache)
+    this._channel.postMessage({
+      type: 'STATE_UPDATE',
+      payload: this._value,
+      senderId: this._instanceId,
+    })
     this._notifySubscribers()
   }
 
@@ -154,16 +177,16 @@ export class ChannelStore<T> {
    * @returns The current state of the store.
    */
   get(): T {
-    return this._cache
+    return this._value
   }
 
   /**
-   * Sets the new value for the store's state, updates the cache, and optionally persists it to IndexedDB asynchronously.
+   * Sets the new value for the store's state, updates the value, and optionally persists it to IndexedDB asynchronously.
    * @param value The new state value to set.
    * @returns A Promise that resolves when the state has been set and persisted (if applicable).
    */
   async set(value: T): Promise<void> {
-    this._cache = value
+    this._value = value
 
     if (!this._persist || !this._db) {
       this._triggerChange()
@@ -188,7 +211,7 @@ export class ChannelStore<T> {
    * @param callback The function to call when the state changes.
    * @returns A function that can be called to unsubscribe the callback.
    */
-  subscribe(callback: StoreChangeCallback): () => void {
+  subscribe(callback: StoreChangeCallback<T>): () => void {
     this._subscribers.add(callback)
 
     return () => {

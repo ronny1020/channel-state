@@ -32,7 +32,7 @@ export function useChannelState<T>(store: ChannelStore<T>) {
   const state = ref<T>(store.get())
 
   store.subscribe(() => {
-    state.value = store.get() as UnwrapRef<T>
+    state.value = store.get()
   })
 
   return computed<T>({
