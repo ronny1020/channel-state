@@ -1,11 +1,35 @@
+/**
+ * Callback function type for store changes.
+ */
 type StoreChangeCallback = () => void
 
+/**
+ * Options for configuring a ChannelStore instance.
+ * @template T The type of the state managed by the store.
+ */
 interface ChannelStoreOptions<T> {
-  name: string // required
-  persist?: boolean // default true
-  initial: T // required
+  /**
+   * The name of the channel. This is used for both BroadcastChannel and IndexedDB.
+   * @remarks Required.
+   */
+  name: string
+  /**
+   * Whether the store should persist its state to IndexedDB.
+   * @remarks Defaults to `false`.
+   */
+  persist?: boolean
+  /**
+   * The initial state of the store.
+   * @remarks Required.
+   */
+  initial: T
 }
 
+/**
+ * A class that manages and shares state across different browser tabs or windows
+ * using BroadcastChannel and IndexedDB for persistence.
+ * @template T The type of the state managed by the store.
+ */
 export class ChannelStore<T> {
   private _db: IDBDatabase | null = null
   private _subscribers = new Set<StoreChangeCallback>()
@@ -17,13 +41,17 @@ export class ChannelStore<T> {
   private readonly _dbKey = 'state' // Fixed key for storing the single state object
   private readonly _prefixedName: string
 
+  /**
+   * Creates an instance of ChannelStore.
+   * @param options The options for configuring the store.
+   */
   constructor(options: ChannelStoreOptions<T>) {
     this._name = options.name
-    this._persist = options.persist ?? true
+    this._persist = options.persist ?? false
     this._initial = options.initial
     this._prefixedName = `channel-state__${this._name}`
 
-    this._cache = { ...this._initial } // Initialize cache with initial values
+    this._cache = structuredClone(this._initial)
 
     this._channel = new BroadcastChannel(this._prefixedName)
     this._channel.addEventListener('message', this._handleBroadcast)
@@ -31,6 +59,10 @@ export class ChannelStore<T> {
     this._initDB()
   }
 
+  /**
+   * Initializes the IndexedDB for persistence if `_persist` is true.
+   * @private
+   */
   private _initDB() {
     if (!this._persist) {
       // Use in-memory cache only; cache already initialized
@@ -57,6 +89,10 @@ export class ChannelStore<T> {
     }
   }
 
+  /**
+   * Loads the cached state from IndexedDB.
+   * @private
+   */
   private _loadCacheFromDB() {
     if (!this._db) return
 
@@ -84,30 +120,47 @@ export class ChannelStore<T> {
     }
   }
 
+  /**
+   * Handles messages received from the BroadcastChannel, updating the cache and notifying subscribers.
+   * @param e The MessageEvent containing the broadcasted data.
+   * @private
+   */
   private _handleBroadcast = (e: MessageEvent) => {
     // Update cache directly with received data
     this._cache = e.data
     this._notifySubscribers()
   }
 
+  /**
+   * Notifies all registered subscribers about a change in the store's state.
+   * @private
+   */
   private _notifySubscribers() {
     for (const cb of this._subscribers) cb()
   }
 
+  /**
+   * Triggers a change notification by posting the current cache to the BroadcastChannel
+   * and notifying local subscribers.
+   * @private
+   */
   private _triggerChange() {
     this._channel.postMessage(this._cache)
     this._notifySubscribers()
   }
 
   /**
-   * Synchronous getter from cache
+   * Synchronously retrieves the current state from the cache.
+   * @returns The current state of the store.
    */
   get(): T {
     return this._cache
   }
 
   /**
-   * Set value, update cache and optionally IndexedDB asynchronously
+   * Sets the new value for the store's state, updates the cache, and optionally persists it to IndexedDB asynchronously.
+   * @param value The new state value to set.
+   * @returns A Promise that resolves when the state has been set and persisted (if applicable).
    */
   async set(value: T): Promise<void> {
     this._cache = value
@@ -130,6 +183,11 @@ export class ChannelStore<T> {
     })
   }
 
+  /**
+   * Subscribes a callback function to state changes.
+   * @param callback The function to call when the state changes.
+   * @returns A function that can be called to unsubscribe the callback.
+   */
   subscribe(callback: StoreChangeCallback): () => void {
     this._subscribers.add(callback)
 
@@ -138,6 +196,10 @@ export class ChannelStore<T> {
     }
   }
 
+  /**
+   * Cleans up resources used by the ChannelStore, including closing the BroadcastChannel
+   * and IndexedDB connection, and clearing subscribers.
+   */
   destroy() {
     this._channel.close()
     this._subscribers.clear()

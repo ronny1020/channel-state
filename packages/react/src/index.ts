@@ -1,6 +1,31 @@
+/**
+ * @module @channel-state/react
+ * @description Provides a React hook for integrating with ChannelStore.
+ */
 import React, { useSyncExternalStore } from 'react'
 import { ChannelStore } from '@channel-state/core'
 
+/**
+ * A React hook that provides access to a ChannelStore's state and a setter function.
+ * It uses `useSyncExternalStore` for efficient and concurrent-safe updates.
+ * @template T The type of the state managed by the ChannelStore.
+ * @param store The ChannelStore instance to connect to.
+ * @returns A tuple containing the current state and a function to update the state.
+ * @example
+ * ```tsx
+ * import { useChannelState } from '@channel-state/react';
+ * import { ChannelStore } from '@channel-state/core';
+ *
+ * const countStore = new ChannelStore<number>({ name: 'count', initial: 0 });
+ *
+ * function Counter() {
+ *   const [count, setCount] = useChannelState(countStore);
+ *   return (
+ *     <button onClick={() => setCount(count + 1)}>Count: {count}</button>
+ *   );
+ * }
+ * ```
+ */
 export function useChannelState<T>(store: ChannelStore<T>) {
   const value = useSyncExternalStore(
     (onStoreChange: () => void) => store.subscribe(onStoreChange),
