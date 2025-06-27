@@ -18,7 +18,8 @@
     "build": "tsup src/index.ts --dts --format esm,cjs",
     "dev": "tsup src/index.ts",
     "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
   },
   "dependencies": {
     "@channel-state/core": "workspace:*"
@@ -28,6 +29,7 @@
     "react-dom": ">=16.8.0"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.0",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "react": "^18.0.0",

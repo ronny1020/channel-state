@@ -7,7 +7,8 @@
     "baseUrl": ".",
     "paths": {
       "@channel-state/core": ["../core/dist"]
-    }
+    },
+    "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]

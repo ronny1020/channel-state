@@ -1,5 +1,5 @@
 import { ChannelStore } from '@channel-state/core'
-import { readable } from 'svelte/store'
+import { writable } from 'svelte/store'
 
 /**
  * @module @channel-state/svelte
@@ -31,21 +31,31 @@ import { readable } from 'svelte/store'
  * <button on:click={increment}>Count: {$count}</button>
  * ```
  */
-export function useChannelState<T>(store: ChannelStore<T>) {
-  const { subscribe } = readable<T>(store.get(), (set: (value: T) => void) => {
-    const unsubscribe = store.subscribe((value) => {
-      set(value)
+export function useChannelState<T>(channelStore: ChannelStore<T>) {
+  // Create a Svelte writable store.
+  // The second argument (start function) is called when the first subscriber
+  // subscribes, and the function it returns (stop function) is called when
+  // the last subscriber unsubscribes.
+  const svelteStore = writable<T>(channelStore.get(), (set) => {
+    // Subscribe to the ChannelStore
+    const unsubscribeChannelStore = channelStore.subscribe((value) => {
+      set(value) // Update the Svelte store with the ChannelStore's value
     })
 
+    // This function is returned by the start function and is called when
+    // the last subscriber unsubscribes. It cleans up the ChannelStore subscription.
     return () => {
-      unsubscribe()
+      unsubscribeChannelStore()
     }
   })
 
+  // Return a store-like object that is writable from the Svelte side
+  // and also reflects changes from ChannelStore.
   return {
-    subscribe,
+    subscribe: svelteStore.subscribe, // Expose the writable store's subscribe method
     set: (value: T) => {
-      store.set(value)
+      channelStore.set(value) // Update the underlying ChannelStore
     },
+    update: svelteStore.update, // Expose update method for convenience (optional but standard for writable stores)
   }
 }
