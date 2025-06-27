@@ -33,6 +33,7 @@ The repository is structured as follows:
   - `core`: The core library, containing the `ChannelStore` class.
   - `react`: The React hook (`useChannelState`).
   - `vue`: The Vue composable (`useChannelState`).
+  - `svelte`: The Svelte store (`useChannelState`).
 - `examples/*`: This directory contains example applications for each of the supported frameworks. These are useful for testing your changes in a real browser environment.
 
 ## Development Workflow
@@ -48,6 +49,7 @@ The repository is structured as follows:
     # Run a specific example
     pnpm dev:react-example
     pnpm dev:vue-example
+    pnpm dev:svelte-example
     ```
 
 3.  **Run tests:** Make sure all tests pass:

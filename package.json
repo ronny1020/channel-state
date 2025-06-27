@@ -12,6 +12,7 @@
     "dev:examples": "pnpm -r --filter='./examples/*' --parallel run dev",
     "dev:react-example": "pnpm --filter='react-app' run dev",
     "dev:vue-example": "pnpm --filter='vue-app' run dev",
+    "dev:svelte-example": "pnpm --filter='svelte-app' run dev",
     "test": "vitest",
     "prepare": "husky",
     "lint": "pnpm -r run lint",
@@ -30,7 +31,7 @@
     "rimraf": "^5.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "vite": "^5.0.0",
+    "vite": "^6.0.0",
     "vitest": "^3.2.4"
   }
 }

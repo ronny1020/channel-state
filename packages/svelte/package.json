@@ -1,0 +1,32 @@
+{
+  "name": "@channel-state/svelte",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs",
+    "dev": "tsup src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@channel-state/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": ">=3.0.0"
+  },
+  "devDependencies": {
+    "@tsconfig/svelte": "^5.0.4",
+    "svelte": "^4.0.0"
+  }
+}

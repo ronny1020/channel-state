@@ -7,7 +7,7 @@
 - **Cross-tab and Cross-window State Sync:** Automatically synchronizes state across all open tabs and windows of the same origin.
 - **Persistent State:** Optionally persist state to `IndexedDB`, so your application's state is restored after a page reload or even when the browser is restarted.
 - **Framework Agnostic:** The core library is written in plain TypeScript and can be used in any JavaScript project.
-- **Official Framework Wrappers:** Provides easy-to-use wrappers for popular frameworks like React and Vue.
+- **Official Framework Wrappers:** Provides easy-to-use wrappers for popular frameworks like React, Vue, and Svelte.
 - **Lightweight and Zero-dependency:** The core library has no external dependencies, keeping your bundle size small.
 
 ## Installation
@@ -23,6 +23,9 @@ pnpm add @channel-state/core @channel-state/react
 
 # For Vue
 pnpm add @channel-state/core @channel-state/vue
+
+# For Svelte
+pnpm add @channel-state/core @channel-state/svelte
 ```
 
 ## Usage
@@ -101,6 +104,31 @@ const count = useChannelState(countStore)
 <template>
   <button @click="count++">Count: {{ count }}</button>
 </template>
+```
+
+### Svelte (`@channel-state/svelte`)
+
+The Svelte package provides a `useChannelState` function that returns a Svelte store.
+
+```svelte
+<script lang="ts">
+  import { ChannelStore } from '@channel-state/core';
+  import { useChannelState } from '@channel-state/svelte';
+
+  const countStore = new ChannelStore<number>({
+    name: 'count',
+    initial: 0,
+    persist: true,
+  });
+
+  const count = useChannelState(countStore);
+
+  function increment() {
+    $count++;
+  }
+</script>
+
+<button on:click={increment}>Count: {$count}</button>
 ```
 
 ## License
