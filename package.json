@@ -16,7 +16,7 @@
     "test": "pnpm -r --filter='./packages/*' run test",
     "prepare": "husky",
     "lint": "pnpm -r run lint",
-    "format": "pnpm -r run format",
+    "format": "prettier --write .",
     "clean": "pnpm -r run clean && rimraf node_modules",
     "typecheck": "pnpm -r run typecheck"
   },

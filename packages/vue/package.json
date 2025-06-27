@@ -18,7 +18,8 @@
     "build": "tsup src/index.ts --dts --format esm,cjs",
     "dev": "tsup src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vitest",
+    "format": "prettier --write 'src/**/*.{ts,tsx,vue}' --config ../../.prettierrc.json"
   },
   "dependencies": {
     "@channel-state/core": "workspace:*"
