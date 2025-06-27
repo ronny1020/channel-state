@@ -188,13 +188,14 @@ export class ChannelStore<T> {
   async set(value: T): Promise<void> {
     this._value = value
 
-    if (!this._persist || !this._db) {
+    if (!this._persist || this._db === null) {
       this._triggerChange()
       return
     }
 
+    const db = this._db
     return new Promise((resolve, reject) => {
-      const tx = this._db!.transaction(this._prefixedName, 'readwrite')
+      const tx = db.transaction(this._prefixedName, 'readwrite')
       const store = tx.objectStore(this._prefixedName)
       const req = store.put(value, this._dbKey)
 
@@ -227,5 +228,15 @@ export class ChannelStore<T> {
     this._channel.close()
     this._subscribers.clear()
     this._db?.close()
+  }
+
+  /**
+   * Resets the store's state to its initial value.
+   * @returns A Promise that resolves when the state has been reset.
+   */
+  async reset(): Promise<void> {
+    this._value = structuredClone(this._initial)
+    this._triggerChange()
+    return Promise.resolve()
   }
 }

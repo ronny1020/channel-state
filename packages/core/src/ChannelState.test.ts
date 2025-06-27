@@ -136,4 +136,12 @@ describe('ChannelStore', () => {
     expect(mockClose).toHaveBeenCalled()
     expect(store['_subscribers'].size).toBe(0)
   })
+
+  it('should reset the store to its initial value', async () => {
+    const store = new ChannelStore({ name: 'test-store', initial: 0 })
+    store.set(10)
+    expect(store.get()).toBe(10)
+    await store.reset()
+    expect(store.get()).toBe(0)
+  })
 })
