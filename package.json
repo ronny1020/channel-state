@@ -12,7 +12,6 @@
     "dev:examples": "pnpm -r --filter='./examples/*' --parallel run dev",
     "dev:react-example": "pnpm --filter='react-app' run dev",
     "dev:vue-example": "pnpm --filter='vue-app' run dev",
-    "dev:angular-example": "pnpm --filter='angular-app' run dev",
     "test": "vitest",
     "prepare": "husky",
     "lint": "pnpm -r run lint",
