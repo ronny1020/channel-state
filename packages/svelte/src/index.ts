@@ -1,5 +1,5 @@
-import { ChannelStore } from '@channel-state/core'
-import { writable } from 'svelte/store'
+import { ChannelStore, StoreStatus } from '@channel-state/core'
+import { writable, readable } from 'svelte/store'
 
 /**
  * @module @channel-state/svelte
@@ -32,30 +32,52 @@ import { writable } from 'svelte/store'
  * ```
  */
 export function useChannelState<T>(channelStore: ChannelStore<T>) {
-  // Create a Svelte writable store.
-  // The second argument (start function) is called when the first subscriber
-  // subscribes, and the function it returns (stop function) is called when
-  // the last subscriber unsubscribes.
   const svelteStore = writable<T>(channelStore.get(), (set) => {
-    // Subscribe to the ChannelStore
     const unsubscribeChannelStore = channelStore.subscribe((value) => {
-      set(value) // Update the Svelte store with the ChannelStore's value
+      set(value)
     })
 
-    // This function is returned by the start function and is called when
-    // the last subscriber unsubscribes. It cleans up the ChannelStore subscription.
     return () => {
       unsubscribeChannelStore()
     }
   })
 
-  // Return a store-like object that is writable from the Svelte side
-  // and also reflects changes from ChannelStore.
   return {
-    subscribe: svelteStore.subscribe, // Expose the writable store's subscribe method
+    subscribe: svelteStore.subscribe,
     set: (value: T) => {
-      channelStore.set(value) // Update the underlying ChannelStore
+      channelStore.set(value)
     },
-    update: svelteStore.update, // Expose update method for convenience (optional but standard for writable stores)
+    update: svelteStore.update,
   }
+}
+
+/**
+ * A Svelte store that provides access to a ChannelStore's status.
+ * @template T The type of the state managed by the ChannelStore.
+ * @param store The ChannelStore instance to connect to.
+ * @returns A Svelte `Readable` store that represents the current status of the ChannelStore.
+ * @example
+ * ```svelte
+ * <script lang="ts">
+ *   import { useChannelStateWithStatus } from '@channel-state/svelte';
+ *   import { ChannelStore } from '@channel-state/core';
+ *
+ *   const countStore = new ChannelStore<number>({ name: 'count', initial: 0 });
+ *   const status = useChannelStateWithStatus(countStore);
+ * </script>
+ *
+ * <p>Status: {$status}</p>
+ * ```
+ */
+export function useChannelStateWithStatus<T>(channelStore: ChannelStore<T>) {
+  const status = readable<StoreStatus>(channelStore.status, (set) => {
+    const unsubscribe = channelStore.subscribeStatus((newStatus) => {
+      set(newStatus)
+    })
+    return () => {
+      unsubscribe()
+    }
+  })
+
+  return status
 }

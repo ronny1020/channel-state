@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import { ChannelStore } from '@channel-state/core'
-import { useChannelState } from './index'
+import { useChannelState, useChannelStateWithStatus } from './index'
 
 describe('useChannelState in Vue', () => {
   let store: ChannelStore<number>
@@ -62,5 +62,47 @@ describe('useChannelState in Vue', () => {
     store.set(5)
     await wrapper.vm.$nextTick() // Wait for Vue to react to changes
     expect(wrapper.text()).toContain('Count: 5')
+  })
+})
+
+describe('useChannelStateWithStatus in Vue', () => {
+  let store: ChannelStore<number>
+
+  beforeEach(() => {
+    store = new ChannelStore<number>({
+      name: 'test-status',
+      initial: 0,
+      persist: false,
+    })
+  })
+
+  it('should return the initial status', () => {
+    const TestComponent = defineComponent({
+      setup() {
+        const status = useChannelStateWithStatus(store)
+        return { status }
+      },
+      template: `<div>Status: {{ status }}</div>`,
+    })
+
+    const wrapper = mount(TestComponent)
+    expect(wrapper.text()).toContain('Status: initial')
+  })
+
+  it('should update status when store is destroyed', async () => {
+    const TestComponent = defineComponent({
+      setup() {
+        const status = useChannelStateWithStatus(store)
+        return { status }
+      },
+      template: `<div>Status: {{ status }}</div>`,
+    })
+
+    const wrapper = mount(TestComponent)
+    expect(wrapper.text()).toContain('Status: initial')
+
+    store.destroy()
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain('Status: destroyed')
   })
 })

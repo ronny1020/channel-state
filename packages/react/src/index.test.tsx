@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import React from 'react'
 import { ChannelStore } from '@channel-state/core'
-import { useChannelState } from './index'
+import { useChannelState, useChannelStateWithStatus } from './index'
 
 describe('useChannelState in React', () => {
   let store: ChannelStore<number>
@@ -63,5 +63,26 @@ describe('useChannelState in React', () => {
       store.set(5)
     })
     expect(await screen.findByText('Count: 5')).toBeInTheDocument()
+  })
+
+  it('should return the correct status', async () => {
+    function TestComponent() {
+      const status = useChannelStateWithStatus(store)
+      return <div>Status: {status}</div>
+    }
+
+    await act(async () => {
+      render(<TestComponent />)
+    })
+
+    // The store is initialized before the component is rendered,
+    // so the status is already 'ready'.
+    expect(await screen.findByText('Status: ready')).toBeInTheDocument()
+
+    await act(async () => {
+      store.destroy()
+    })
+
+    expect(await screen.findByText('Status: destroyed')).toBeInTheDocument()
   })
 })

@@ -144,4 +144,87 @@ describe('ChannelStore', () => {
     await store.reset()
     expect(store.get()).toBe(0)
   })
+
+  it('should update status throughout the lifecycle', () => {
+    const store = new ChannelStore({ name: 'test-store', initial: 0 })
+    expect(store.status).toBe('initial')
+
+    // Simulate successful initialization
+    // In a real scenario, this would be handled by the store's internal logic
+    store.status = 'ready'
+    expect(store.status).toBe('ready')
+
+    store.destroy()
+    expect(store.status).toBe('destroyed')
+  })
+
+  it('should notify status subscribers when status changes', () => {
+    const store = new ChannelStore({ name: 'test-store', initial: 0 })
+    const statusSubscriber = vi.fn()
+    store.subscribeStatus(statusSubscriber)
+
+    // Simulate status change to ready (e.g., after initDB or loadCacheFromDB)
+    store.status = 'ready'
+    store['_notifyStatusSubscribers']()
+    expect(statusSubscriber).toHaveBeenCalledWith('ready')
+
+    statusSubscriber.mockClear()
+    store.destroy()
+    expect(statusSubscriber).toHaveBeenCalledWith('destroyed')
+  })
+
+  it('should prevent set operations if the store is destroyed', async () => {
+    const store = new ChannelStore({ name: 'test-store', initial: 0 })
+    store.destroy()
+    const initialValue = store.get()
+    await store.set(10)
+    expect(store.get()).toBe(initialValue) // Value should not change
+    expect(mockPostMessage).not.toHaveBeenCalledWith(
+      expect.objectContaining({ payload: 10 }),
+    )
+  })
+
+  it('should prevent reset operations if the store is destroyed', async () => {
+    const store = new ChannelStore({ name: 'test-store', initial: 0 })
+    store.set(10)
+    store.destroy()
+    await store.reset()
+    expect(store.get()).toBe(10) // Value should not reset
+    expect(mockPostMessage).not.toHaveBeenCalledWith(
+      expect.objectContaining({ payload: 0 }),
+    )
+  })
+
+  it('should prevent new subscriptions if the store is destroyed', () => {
+    const store = new ChannelStore({ name: 'test-store', initial: 0 })
+    store.destroy()
+    const subscriber = vi.fn()
+    const unsubscribe = store.subscribe(subscriber)
+    store.set(10) // Attempt to trigger a change
+    expect(subscriber).not.toHaveBeenCalled()
+    expect(unsubscribe).toBeInstanceOf(Function) // Still returns a function
+  })
+
+  it('should prevent new status subscriptions if the store is destroyed', () => {
+    const store = new ChannelStore({ name: 'test-store', initial: 0 })
+    store.destroy()
+    const statusSubscriber = vi.fn()
+    const unsubscribe = store.subscribeStatus(statusSubscriber)
+    store.status = 'ready' // Attempt to change status
+    store['_notifyStatusSubscribers']() // Manually trigger notification
+    expect(statusSubscriber).not.toHaveBeenCalled()
+    expect(unsubscribe).toBeInstanceOf(Function) // Still returns a function
+  })
+
+  it('should prevent destroy method itself if the store is already destroyed', () => {
+    const store = new ChannelStore({ name: 'test-store', initial: 0 })
+    store.destroy()
+    expect(mockClose).toHaveBeenCalledTimes(1)
+    expect(store.status).toBe('destroyed')
+
+    // Attempt to destroy again
+    store.destroy()
+    expect(mockClose).toHaveBeenCalledTimes(1) // Should not be called again
+    expect(store.status).toBe('destroyed') // Status should remain destroyed
+  })
 })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChannelStore } from '@channel-state/core'
-import { useChannelState } from '@channel-state/vue'
+import { useChannelState, useChannelStateWithStatus } from '@channel-state/vue'
 
 const countStore = new ChannelStore<number>({
   name: 'count',
@@ -8,9 +8,10 @@ const countStore = new ChannelStore<number>({
 })
 
 const count = useChannelState(countStore)
+const status = useChannelStateWithStatus(countStore)
 
 const increment = () => {
-  count.value += 1
+  count.value++
 }
 </script>
 
@@ -18,6 +19,7 @@ const increment = () => {
   <div>
     <h1>Vue App Example</h1>
     <p>Count: {{ count ?? 0 }}</p>
+    <p>Status: {{ status }}</p>
     <button @click="increment()">Increment</button>
   </div>
 </template>
