@@ -1,14 +1,23 @@
 # channel-state
 
-`channel-state` is a lightweight, zero-dependency state management library that enables seamless state sharing across different browser tabs, windows, and even different JavaScript frameworks. It leverages the power of the browser's native `BroadcastChannel` and `IndexedDB` APIs to provide a robust and persistent state management solution.
+`channel-state` is a cutting-edge, zero-dependency state management library engineered for modern web applications. It provides robust, seamless state synchronization across all browser tabs, windows, and even diverse JavaScript frameworks, leveraging native `BroadcastChannel` and `IndexedDB` APIs for unparalleled cross-context communication and optional persistence. This makes it an ideal choice for complex, multi-instance web applications requiring consistent state without the overhead of external dependencies.
 
-## Features
+## Key Advantages
 
-- **Cross-tab and Cross-window State Sync:** Automatically synchronizes state across all open tabs and windows of the same origin.
-- **Persistent State:** Optionally persist state to `IndexedDB`, so your application's state is restored after a page reload or even when the browser is restarted.
-- **Framework Agnostic:** The core library is written in plain TypeScript and can be used in any JavaScript project.
-- **Official Framework Wrappers:** Provides easy-to-use wrappers for popular frameworks like React, Vue, and Svelte.
-- **Lightweight and Zero-dependency:** The core library has no external dependencies, keeping your bundle size small.
+- **Unparalleled Cross-Context State Synchronization:** Achieves automatic, real-time state synchronization across all open tabs and windows of the same origin, ensuring data consistency without complex manual orchestration.
+- **Robust and Optional State Persistence:** Offers the capability to persist state to `IndexedDB`, guaranteeing that your application's state is reliably restored even after browser restarts or page reloads, enhancing user experience and data integrity.
+- **Universal Framework Agnosticism:** Designed from the ground up in pure TypeScript, the core library integrates effortlessly with _any_ JavaScript project or framework, providing maximum flexibility and avoiding vendor lock-in.
+- **Optimized Official Framework Integrations:** Provides meticulously crafted, easy-to-use wrappers for leading frameworks like React, Vue, and Svelte, streamlining development and ensuring idiomatic usage within those ecosystems.
+- **Minimal Footprint & Zero External Dependencies:** The core library boasts a remarkably small bundle size due to its complete lack of external dependencies, contributing to faster load times and reduced attack surface.
+
+## Status
+
+| Package                                       | Version                                                                                                               | Downloads                                                                                                              |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| [`@channel-state/core`](./packages/core/)     | [![npm](https://img.shields.io/npm/v/@channel-state/core.svg)](https://www.npmjs.com/package/@channel-state/core)     | [![npm](https://img.shields.io/npm/dm/@channel-state/core.svg)](https://www.npmjs.com/package/@channel-state/core)     |
+| [`@channel-state/react`](./packages/react/)   | [![npm](https://img.shields.io/npm/v/@channel-state/react.svg)](https://www.npmjs.com/package/@channel-state/react)   | [![npm](https://img.shields.io/npm/dm/@channel-state/react.svg)](https://www.npmjs.com/package/@channel-state/react)   |
+| [`@channel-state/vue`](./packages/vue/)       | [![npm](https://img.shields.io/npm/v/@channel-state/vue.svg)](https://www.npmjs.com/package/@channel-state/vue)       | [![npm](https://img.shields.io/npm/dm/@channel-state/vue.svg)](https://www.npmjs.com/package/@channel-state/vue)       |
+| [`@channel-state/svelte`](./packages/svelte/) | [![npm](https://img.shields.io/npm/v/@channel-state/svelte.svg)](https://www.npmjs.com/package/@channel-state/svelte) | [![npm](https://img.shields.io/npm/dm/@channel-state/svelte.svg)](https://www.npmjs.com/package/@channel-state/svelte) |
 
 ## Installation
 
@@ -17,119 +26,17 @@ You can install `channel-state` and its framework-specific packages using your f
 ```bash
 # For the core library
 pnpm add @channel-state/core
-
-# For React
-pnpm add @channel-state/core @channel-state/react
-
-# For Vue
-pnpm add @channel-state/core @channel-state/vue
-
-# For Svelte
-pnpm add @channel-state/core @channel-state/svelte
 ```
+
+For framework-specific packages, see their respective READMEs:
+
+- [React Package README](./packages/react/README.md)
+- [Vue Package README](./packages/vue/README.md)
+- [Svelte Package README](./packages/svelte/README.md)
 
 ## Usage
 
-### Core (`@channel-state/core`)
-
-The core package provides the `ChannelStore` class, which is the foundation of `channel-state`.
-
-```typescript
-import { ChannelStore } from '@channel-state/core'
-
-const countStore = new ChannelStore<number>({
-  name: 'count', // A unique name for the channel
-  initial: 0, // The initial state
-  persist: true, // (Optional) Whether to persist the state to IndexedDB
-})
-
-// Get the current state
-const currentCount = countStore.get()
-
-// Set a new state
-countStore.set(currentCount + 1)
-
-// Subscribe to state changes
-const unsubscribe = countStore.subscribe((newCount) => {
-  console.log('Count changed:', newCount)
-})
-
-// Unsubscribe when you're done
-unsubscribe()
-```
-
-### React (`@channel-state/react`)
-
-The React package provides a `useChannelState` hook that makes it easy to integrate `channel-state` with your React components.
-
-```tsx
-import { ChannelStore } from '@channel-state/core'
-import { useChannelState } from '@channel-state/react'
-
-const countStore = new ChannelStore<number>({
-  name: 'count',
-  initial: 0,
-  persist: true,
-})
-
-function Counter() {
-  const [count, setCount] = useChannelState(countStore)
-
-  return (
-    <button onClick={() => setCount((count ?? 0) + 1)}>
-      Count: {count ?? 0}
-    </button>
-  )
-}
-```
-
-### Vue (`@channel-state/vue`)
-
-The Vue package provides a `useChannelState` composable that returns a reactive `ref`.
-
-```vue
-<script setup lang="ts">
-import { ChannelStore } from '@channel-state/core'
-import { useChannelState } from '@channel-state/vue'
-
-const countStore = new ChannelStore<number>({
-  name: 'count',
-  initial: 0,
-  persist: true,
-})
-
-const count = useChannelState(countStore)
-</script>
-
-<template>
-  <button @click="count++">Count: {{ count }}</button>
-</template>
-```
-
-### Svelte (`@channel-state/svelte`)
-
-The Svelte package provides a `useChannelState` function that returns a Svelte store.
-
-```svelte
-<script lang="ts">
-  import { ChannelStore } from '@channel-state/core';
-  import { useChannelState } from '@channel-state/svelte';
-
-  const countStore = new ChannelStore<number>({
-    name: 'count',
-    initial: 0,
-    persist: true,
-  });
-
-  const count = useChannelState(countStore);
-
-  function increment() {
-    $count++;
-  }
-</script>
-
-<button on:click={increment}>Count: {$count}</button>
-```
+For detailed usage of the core library, please refer to the [Core Package README](./packages/core/README.md).
 
 ## License
 
