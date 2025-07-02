@@ -1,5 +1,5 @@
 import { ChannelStore, StoreStatus } from '@channel-state/core'
-import { useChannelState, useChannelStateWithStatus } from './index'
+import { useChannelState, useChannelStatus } from './index'
 import { get } from 'svelte/store'
 import { tick } from 'svelte'
 
@@ -39,7 +39,7 @@ describe('useChannelState in Svelte', () => {
   })
 })
 
-describe('useChannelStateWithStatus in Svelte', () => {
+describe('useChannelStatus in Svelte', () => {
   let store: ChannelStore<number>
 
   beforeEach(async () => {
@@ -60,14 +60,16 @@ describe('useChannelStateWithStatus in Svelte', () => {
   })
 
   it('should return the initial status', () => {
-    const status = useChannelStateWithStatus(store)
+    const status = useChannelStatus(store)
     expect(get(status)).toBe('ready')
   })
 
   it('should update status when store is destroyed', async () => {
-    const status = useChannelStateWithStatus(store)
+    const status = useChannelStatus(store)
     let currentStatus: StoreStatus = get(status)
-    const unsubscribe = status.subscribe((s) => (currentStatus = s))
+    const unsubscribe = status.subscribe(
+      (s: StoreStatus) => (currentStatus = s),
+    )
 
     expect(currentStatus).toBe('ready')
 

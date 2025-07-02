@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import React from 'react'
 import { ChannelStore } from '@channel-state/core'
-import { useChannelState, useChannelStateWithStatus } from './index'
+import { useChannelState, useChannelStatus } from './index'
 
 describe('useChannelState in React', () => {
   let store: ChannelStore<number>
@@ -67,7 +67,7 @@ describe('useChannelState in React', () => {
 
   it('should return the correct status', async () => {
     function TestComponent() {
-      const status = useChannelStateWithStatus(store)
+      const status = useChannelStatus(store)
       return <div>Status: {status}</div>
     }
 

@@ -58,11 +58,11 @@ export function useChannelState<T>(store: ChannelStore<T>) {
  * @example
  * ```vue
  * <script setup lang="ts">
- * import { useChannelStateWithStatus } from '@channel-state/vue'
+ * import { useChannelStatus } from '@channel-state/vue'
  * import { ChannelStore } from '@channel-state/core'
  *
  * const countStore = new ChannelStore<number>({ name: 'count', initial: 0 });
- * const status = useChannelStateWithStatus(countStore);
+ * const status = useChannelStatus(countStore);
  * </script>
  *
  * <template>
@@ -70,7 +70,7 @@ export function useChannelState<T>(store: ChannelStore<T>) {
  * </template>
  * ```
  */
-export function useChannelStateWithStatus<T>(store: ChannelStore<T>) {
+export function useChannelStatus<T>(store: ChannelStore<T>) {
   const status = ref(store.status)
 
   const unsubscribeStatus = store.subscribeStatus((newStatus) => {

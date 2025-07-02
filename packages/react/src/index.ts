@@ -48,18 +48,18 @@ export function useChannelState<T>(store: ChannelStore<T>) {
  * @returns The current status of the store.
  * @example
  * ```tsx
- * import { useChannelStateWithStatus } from '@channel-state/react';
+ * import { useChannelStatus } from '@channel-state/react';
  * import { ChannelStore } from '@channel-state/core';
  *
  * const countStore = new ChannelStore<number>({ name: 'count', initial: 0 });
  *
  * function StatusDisplay() {
- *   const status = useChannelStateWithStatus(countStore);
+ *   const status = useChannelStatus(countStore);
  *   return <p>Status: {status}</p>;
  * }
  * ```
  */
-export function useChannelStateWithStatus<T>(store: ChannelStore<T>) {
+export function useChannelStatus<T>(store: ChannelStore<T>) {
   const lastStatus = useRef<string | null>(null)
 
   const status = useSyncExternalStore(

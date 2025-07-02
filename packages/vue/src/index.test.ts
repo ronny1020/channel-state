@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import { ChannelStore } from '@channel-state/core'
-import { useChannelState, useChannelStateWithStatus } from './index'
+import { useChannelState, useChannelStatus } from './index'
 
 describe('useChannelState in Vue', () => {
   let store: ChannelStore<number>
@@ -65,7 +65,7 @@ describe('useChannelState in Vue', () => {
   })
 })
 
-describe('useChannelStateWithStatus in Vue', () => {
+describe('useChannelStatus in Vue', () => {
   let store: ChannelStore<number>
 
   beforeEach(() => {
@@ -79,7 +79,7 @@ describe('useChannelStateWithStatus in Vue', () => {
   it('should return the initial status', () => {
     const TestComponent = defineComponent({
       setup() {
-        const status = useChannelStateWithStatus(store)
+        const status = useChannelStatus(store)
         return { status }
       },
       template: `<div>Status: {{ status }}</div>`,
@@ -92,7 +92,7 @@ describe('useChannelStateWithStatus in Vue', () => {
   it('should update status when store is destroyed', async () => {
     const TestComponent = defineComponent({
       setup() {
-        const status = useChannelStateWithStatus(store)
+        const status = useChannelStatus(store)
         return { status }
       },
       template: `<div>Status: {{ status }}</div>`,
