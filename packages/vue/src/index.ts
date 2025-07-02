@@ -2,7 +2,7 @@
  * @module @channel-state/vue
  * @description Provides a Vue Composition API hook for integrating with ChannelStore.
  */
-import { ref, onUnmounted, Ref, UnwrapRef, computed, watchEffect } from 'vue'
+import { ref, onUnmounted, computed } from 'vue'
 import { ChannelStore } from '@channel-state/core'
 
 /**

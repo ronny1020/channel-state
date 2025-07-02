@@ -35,11 +35,10 @@ describe('useChannelState in React', () => {
       )
     }
 
-    let button
     await act(async () => {
       render(<TestComponent />)
     })
-    button = screen.getByText('Increment: 0')
+    const button = screen.getByText('Increment: 0')
 
     await act(async () => {
       fireEvent.click(button)

@@ -19,7 +19,8 @@
     "dev": "tsup src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "format": "prettier --write 'src/**/*.{ts,tsx,vue}' --config ../../.prettierrc.json"
+    "format": "prettier --write 'src/**/*.{ts,tsx,vue}' --config ../../.prettierrc.json",
+    "lint": "eslint . --fix"
   },
   "dependencies": {
     "@channel-state/core": "workspace:*"
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@vue/test-utils": "^2.4.6",
+    "@types/vue": "^2.0.0",
     "vue": "^3.0.0"
   }
 }

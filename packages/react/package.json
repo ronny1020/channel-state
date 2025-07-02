@@ -19,7 +19,8 @@
     "dev": "tsup src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json"
+    "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json",
+    "lint": "eslint . --fix"
   },
   "dependencies": {
     "@channel-state/core": "workspace:*"

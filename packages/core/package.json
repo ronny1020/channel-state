@@ -19,6 +19,7 @@
     "dev": "tsup src/index.ts",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json"
+    "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json",
+    "lint": "eslint . --fix"
   }
 }

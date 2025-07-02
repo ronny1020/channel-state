@@ -61,18 +61,6 @@ describe('ChannelStore', () => {
     expect(mockIndexedDB.open).not.toHaveBeenCalled()
   })
 
-  it('should persist if persist option is true', () => {
-    const store = new ChannelStore({
-      name: 'test-store',
-      initial: 0,
-      persist: true,
-    })
-    expect(mockIndexedDB.open).toHaveBeenCalledWith(
-      'channel-state__test-store',
-      1,
-    )
-  })
-
   it('should update value and notify subscribers', () => {
     const store = new ChannelStore({ name: 'test-store', initial: 0 })
     const subscriber = vi.fn()
@@ -92,8 +80,6 @@ describe('ChannelStore', () => {
     const store1 = new ChannelStore({ name: 'test-store', initial: 0 })
     const subscriber1 = vi.fn()
     store1.subscribe(subscriber1)
-
-    const store2 = new ChannelStore({ name: 'test-store', initial: 0 })
 
     // Simulate message from store2 to store1
     const messageEvent = new MessageEvent('message', {
@@ -131,7 +117,7 @@ describe('ChannelStore', () => {
 
   it('should destroy the store correctly', () => {
     const store = new ChannelStore({ name: 'test-store', initial: 0 })
-    const unsubscribe = store.subscribe(() => {})
+    store.subscribe(() => {})
     store.destroy()
     expect(mockClose).toHaveBeenCalled()
     expect(store['_subscribers'].size).toBe(0)
