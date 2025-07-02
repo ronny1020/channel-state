@@ -13,6 +13,7 @@
     "dev:react-example": "pnpm --filter='react-app' run dev",
     "dev:vue-example": "pnpm --filter='vue-app' run dev",
     "dev:svelte-example": "pnpm --filter='svelte-app' run dev",
+    "dev:core-example": "pnpm --filter='core-app' run dev",
     "test": "pnpm -r --filter='./packages/*' run test",
     "prepare": "husky",
     "lint": "pnpm -r run lint",
