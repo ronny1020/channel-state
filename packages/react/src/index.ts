@@ -2,8 +2,8 @@
  * @module @channel-state/react
  * @description Provides a React hook for integrating with ChannelStore.
  */
-import { useSyncExternalStore, useRef } from 'react'
-import { ChannelStore } from '@channel-state/core'
+import { useSyncExternalStore } from 'react'
+import type { ChannelStore } from '@channel-state/core'
 
 /**
  * A React hook that provides access to a ChannelStore's state and a setter function.
@@ -28,7 +28,7 @@ import { ChannelStore } from '@channel-state/core'
  */
 export function useChannelState<T>(store: ChannelStore<T>) {
   const value = useSyncExternalStore(
-    (onStoreChange: () => void) => store.subscribe(onStoreChange),
+    store.subscribe.bind(store),
     () => store.get(),
     () => store.get(),
   )
@@ -43,7 +43,6 @@ export function useChannelState<T>(store: ChannelStore<T>) {
 /**
  * A React hook that provides access to a ChannelStore's status.
  * It uses `useSyncExternalStore` for efficient and concurrent-safe updates.
- * @template T The type of the state managed by the ChannelStore.
  * @param store The ChannelStore instance to connect to.
  * @returns The current status of the store.
  * @example
@@ -59,22 +58,11 @@ export function useChannelState<T>(store: ChannelStore<T>) {
  * }
  * ```
  */
-export function useChannelStatus<T>(store: ChannelStore<T>) {
-  const lastStatus = useRef<string | null>(null)
-
+export function useChannelStatus(store: ChannelStore<unknown>) {
   const status = useSyncExternalStore(
-    (onStoreChange) => store.subscribeStatus(onStoreChange),
-    () => {
-      const newStatus = store.status
-
-      if (lastStatus.current === newStatus) {
-        return lastStatus.current
-      }
-
-      lastStatus.current = newStatus
-      return lastStatus.current
-    },
-    () => lastStatus.current || store.status,
+    store.subscribeStatus,
+    () => store.status,
+    () => store.status,
   )
 
   return status

@@ -50,6 +50,7 @@ The repository is structured as follows:
     pnpm dev:react-example
     pnpm dev:vue-example
     pnpm dev:svelte-example
+    pnpm dev:core-example
     ```
 
 3.  **Run tests:** Make sure all tests pass:

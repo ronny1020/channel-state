@@ -26,7 +26,7 @@ Creates a new `ChannelStore` instance.
 
 #### Properties
 
-- `status: StoreStatus`: The current status of the store, indicating its readiness and lifecycle phase. Possible values are `'initial'`, `'ready'`, and `'destroyed'`.
+- `status: StoreStatus`: The current status of the store, indicating its readiness and lifecycle phase. Possible values are `'initializing'`, `'ready'`, and `'destroyed'`.
 
 #### Methods
 

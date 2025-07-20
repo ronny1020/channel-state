@@ -50,7 +50,7 @@ function Counter() {
 A React hook that provides access to a `ChannelStore`'s status. It uses `useSyncExternalStore` for efficient and concurrent-safe updates.
 
 - `store`: The `ChannelStore` instance to connect to.
-- **Returns:** The current status of the store (`'initial'`, `'ready'`, or `'destroyed'`).
+- **Returns:** The current status of the store (`'initializing'`, `'ready'`, or `'destroyed'`).
 
 ##### Example
 

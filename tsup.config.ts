@@ -7,7 +7,7 @@ export default defineConfig({
   clean: true,
   minify: false,
   sourcemap: true,
-  external: ['react', 'react-dom', 'vue', '@angular/core'],
+  external: ['react', 'react-dom', 'vue', '@channel-state/core'],
   treeshake: true,
   splitting: false,
   tsconfig: './tsconfig.json',

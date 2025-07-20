@@ -1,10 +1,10 @@
 /**
  * Represents the status of the ChannelStore.
- * - 'init': The store is initializing.
+ * - 'initializing': The store is initializing.
  * - 'ready': The store is ready to be used.
  * - 'destroyed': The store has been destroyed.
  */
-export type StoreStatus = 'initial' | 'ready' | 'destroyed'
+export type StoreStatus = 'initializing' | 'ready' | 'destroyed'
 
 /**
  * Callback function type for store status changes.
@@ -63,7 +63,7 @@ export class ChannelStore<T> {
   /**
    * The current status of the store.
    */
-  status: StoreStatus = 'initial'
+  status: StoreStatus = 'initializing'
 
   /**
    * Creates an instance of ChannelStore.
@@ -126,8 +126,10 @@ export class ChannelStore<T> {
     req.onsuccess = () => {
       const val = req.result
       if (val === undefined) {
-        // If no stored value, request from other tabs first
-        this._requestInitialStateFromOtherTabs()
+        // If no stored value, use initial value and set status to ready
+        this.status = 'ready'
+        this._notifySubscribers()
+        this._notifyStatusSubscribers()
       } else {
         this._value = val
         this.status = 'ready'
@@ -203,7 +205,6 @@ export class ChannelStore<T> {
   }
 
   private _notifyStatusSubscribers() {
-    console.log('ChannelStore: Notifying status subscribers with:', this.status)
     this._statusSubscribers.forEach((subscriber) => subscriber(this.status))
   }
 
@@ -303,7 +304,6 @@ export class ChannelStore<T> {
       return
     }
     this.status = 'destroyed'
-    this._notifySubscribers()
     this._notifyStatusSubscribers()
     this._channel.close()
     this._subscribers.clear()
@@ -319,12 +319,28 @@ export class ChannelStore<T> {
    * Resets the store's state to its initial value.
    * @returns A Promise that resolves when the state has been reset.
    */
-  async reset(): Promise<void> {
+  reset(): Promise<void> {
     if (this.status === 'destroyed') {
-      return
+      return Promise.resolve()
     }
     this._value = structuredClone(this._initial)
-    this._triggerChange()
-    return Promise.resolve()
+
+    if (!this._db) {
+      this._triggerChange()
+      return Promise.resolve()
+    }
+
+    return new Promise((resolve, reject) => {
+      const db = this._db
+      const tx = db!.transaction(this._prefixedName, 'readwrite')
+      const store = tx.objectStore(this._prefixedName)
+      const req = store.put(this._initial, this._dbKey)
+
+      req.onsuccess = () => {
+        this._triggerChange()
+        resolve()
+      }
+      req.onerror = () => reject(req.error)
+    })
   }
 }

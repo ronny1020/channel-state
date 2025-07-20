@@ -13,20 +13,6 @@ import { ChannelStore } from '@channel-state/core'
  * @param store The ChannelStore instance to connect to.
  * @returns A `Ref` object that represents the current state of the ChannelStore.
  *          Assigning a new value to this `Ref` will update the ChannelStore's state.
- * @example
- * ```vue
- * <script setup lang="ts">
- * import { useChannelState } from '@channel-state/vue'
- * import { ChannelStore } from '@channel-state/core'
- *
- * const countStore = new ChannelStore<number>({ name: 'count', initial: 0 });
- * const count = useChannelState(countStore);
- * </script>
- *
- * <template>
- *   <button @click="count++">Count: {{ count }}</button>
- * </template>
- * ```
  */
 export function useChannelState<T>(store: ChannelStore<T>) {
   const state = ref<T>(store.get())
@@ -52,25 +38,10 @@ export function useChannelState<T>(store: ChannelStore<T>) {
 /**
  * A Vue Composition API hook that provides a reactive reference to a ChannelStore's status.
  * The returned `Ref` reflects the current lifecycle status of the ChannelStore.
- * @template T The type of the state managed by the ChannelStore.
  * @param store The ChannelStore instance to connect to.
  * @returns A `Ref` object that represents the current status of the ChannelStore.
- * @example
- * ```vue
- * <script setup lang="ts">
- * import { useChannelStatus } from '@channel-state/vue'
- * import { ChannelStore } from '@channel-state/core'
- *
- * const countStore = new ChannelStore<number>({ name: 'count', initial: 0 });
- * const status = useChannelStatus(countStore);
- * </script>
- *
- * <template>
- *   <p>Status: {{ status }}</p>
- * </template>
- * ```
  */
-export function useChannelStatus<T>(store: ChannelStore<T>) {
+export function useChannelStatus(store: ChannelStore<unknown>) {
   const status = ref(store.status)
 
   const unsubscribeStatus = store.subscribeStatus((newStatus) => {

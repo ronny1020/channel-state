@@ -86,7 +86,7 @@ describe('useChannelStatus in Vue', () => {
     })
 
     const wrapper = mount(TestComponent)
-    expect(wrapper.text()).toContain('Status: initial')
+    expect(wrapper.text()).toContain('Status: initializing')
   })
 
   it('should update status when store is destroyed', async () => {
@@ -99,7 +99,7 @@ describe('useChannelStatus in Vue', () => {
     })
 
     const wrapper = mount(TestComponent)
-    expect(wrapper.text()).toContain('Status: initial')
+    expect(wrapper.text()).toContain('Status: initializing')
 
     store.destroy()
     await wrapper.vm.$nextTick()

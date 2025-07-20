@@ -9,8 +9,6 @@ const countStore = new ChannelStore({
 export default function App() {
   const [count, setCount] = useChannelState(countStore)
 
-  console.log(count)
-
   return (
     <div>
       <h1>React App Example</h1>

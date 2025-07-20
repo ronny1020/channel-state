@@ -42,26 +42,17 @@ describe('useChannelState in Svelte', () => {
 describe('useChannelStatus in Svelte', () => {
   let store: ChannelStore<number>
 
-  beforeEach(async () => {
+  beforeEach(() => {
     store = new ChannelStore<number>({
       name: 'test-status',
       initial: 0,
       persist: false,
     })
-    // Wait for the store to become ready
-    await new Promise<void>((resolve) => {
-      const unsubscribe = store.subscribeStatus((status) => {
-        if (status === 'ready') {
-          unsubscribe()
-          resolve()
-        }
-      })
-    })
   })
 
   it('should return the initial status', () => {
     const status = useChannelStatus(store)
-    expect(get(status)).toBe('ready')
+    expect(get(status)).toBe('initializing')
   })
 
   it('should update status when store is destroyed', async () => {
@@ -71,7 +62,7 @@ describe('useChannelStatus in Svelte', () => {
       (s: StoreStatus) => (currentStatus = s),
     )
 
-    expect(currentStatus).toBe('ready')
+    expect(currentStatus).toBe('initializing')
 
     store.destroy()
     // Wait for the next microtask tick to allow Svelte store to update

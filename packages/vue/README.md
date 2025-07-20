@@ -50,7 +50,7 @@ const count = useChannelState(countStore)
 A Vue Composition API hook that provides a reactive reference to a `ChannelStore`'s status. The returned `Ref` reflects the current lifecycle status of the `ChannelStore`.
 
 - `store`: The `ChannelStore` instance to connect to.
-- **Returns:** A `Ref` object that represents the current status of the `ChannelStore` (`'initial'`, `'ready'`, or `'destroyed'`).
+- **Returns:** A `Ref` object that represents the current status of the `ChannelStore` (`'initializing'`, `'ready'`, or `'destroyed'`).
 
 ##### Example
 

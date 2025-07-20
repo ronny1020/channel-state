@@ -52,7 +52,7 @@ A Svelte store that provides access to a `ChannelStore`'s state. The returned st
 A Svelte store that provides access to a `ChannelStore`'s status.
 
 - `channelStore`: The `ChannelStore` instance to connect to.
-- **Returns:** A Svelte `Readable` store that represents the current status of the `ChannelStore` (`'initial'`, `'ready'`, or `'destroyed'`).
+- **Returns:** A Svelte `Readable` store that represents the current status of the `ChannelStore` (`'initializing'`, `'ready'`, or `'destroyed'`).
 
 ##### Example
 

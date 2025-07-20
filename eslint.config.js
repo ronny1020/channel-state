@@ -68,6 +68,7 @@ export default tseslint.config(
       'require-jsdoc': 'off',
       'valid-jsdoc': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      'no-console': ['error', { allow: ['warn', 'error'] }],
     },
   },
   configPrettier,

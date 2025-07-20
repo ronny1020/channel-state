@@ -53,7 +53,6 @@ export function useChannelState<T>(channelStore: ChannelStore<T>) {
 
 /**
  * A Svelte store that provides access to a ChannelStore's status.
- * @template T The type of the state managed by the ChannelStore.
  * @param channelStore The ChannelStore instance to connect to.
  * @returns A Svelte `Readable` store that represents the current status of the ChannelStore.
  * @example
@@ -69,7 +68,7 @@ export function useChannelState<T>(channelStore: ChannelStore<T>) {
  * <p>Status: {$status}</p>
  * ```
  */
-export function useChannelStatus<T>(channelStore: ChannelStore<T>) {
+export function useChannelStatus(channelStore: ChannelStore<unknown>) {
   const status = readable<StoreStatus>(channelStore.status, (set) => {
     const unsubscribe = channelStore.subscribeStatus((newStatus) => {
       set(newStatus)
