@@ -18,9 +18,11 @@
     "build": "tsup src/index.ts --dts --format esm,cjs",
     "dev": "tsup src/index.ts",
     "test": "vitest",
+    "test:coverage": "vitest --coverage",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "lint:check": "eslint ."
   },
   "license": "Apache-2.0"
 }

@@ -15,11 +15,14 @@
     "dev:svelte-example": "pnpm --filter='svelte-app' run dev",
     "dev:core-example": "pnpm --filter='core-app' run dev",
     "test": "pnpm -r --filter='./packages/*' run test",
+    "test:coverage": "pnpm -r --filter='./packages/*' run test:coverage",
     "prepare": "husky",
     "lint": "pnpm -r run lint",
     "format": "prettier --write .",
     "clean": "pnpm -r run clean && rimraf node_modules",
-    "typecheck": "pnpm -r run typecheck"
+    "typecheck": "pnpm -r run typecheck",
+    "format:check": "prettier --check .",
+    "lint:check": "pnpm -r run lint:check"
   },
   "license": "Apache-2.0",
   "devDependencies": {
@@ -31,6 +34,7 @@
     "@typescript-eslint/parser": "^8.35.1",
     "@vitejs/plugin-react": "^4.0.0",
     "@vitejs/plugin-vue": "^5.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.30.1",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^10.1.5",

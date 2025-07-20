@@ -12,4 +12,4 @@ tmp/*
 *.swp
 .idea
 .vscode
-/coverage
+**/coverage/

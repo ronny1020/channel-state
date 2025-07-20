@@ -1,0 +1,93 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    # Enable version updates for sub-dependencies
+    open-pull-requests-limit: 10
+    # Group all dependency updates into a single pull request
+    groups:
+      dependencies:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/packages/core'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 10
+    groups:
+      dependencies:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/packages/react'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 10
+    groups:
+      dependencies:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/packages/svelte'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 10
+    groups:
+      dependencies:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/packages/vue'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 10
+    groups:
+      dependencies:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/examples/core-app'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 10
+    groups:
+      dependencies:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/examples/react-app'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 10
+    groups:
+      dependencies:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/examples/svelte-app'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 10
+    groups:
+      dependencies:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'npm'
+    directory: '/examples/vue-app'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 10
+    groups:
+      dependencies:
+        patterns:
+          - '*'
