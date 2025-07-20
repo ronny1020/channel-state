@@ -21,5 +21,6 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json",
     "lint": "eslint . --fix"
-  }
+  },
+  "license": "Apache-2.0"
 }

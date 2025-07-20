@@ -21,6 +21,7 @@
     "clean": "pnpm -r run clean && rimraf node_modules",
     "typecheck": "pnpm -r run typecheck"
   },
+  "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/js": "^9.30.1",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
