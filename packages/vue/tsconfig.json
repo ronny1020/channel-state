@@ -3,11 +3,10 @@
   "compilerOptions": {
     "composite": true,
     "jsx": "preserve",
-    "baseUrl": ".",
     "paths": {
       "@channel-state/core": ["../core/dist"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../__mocks__/**/*"],
   "exclude": ["dist", "node_modules"]
 }

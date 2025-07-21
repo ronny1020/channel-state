@@ -1,9 +1,5 @@
-/// <reference types="node" />
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { vi } from 'vitest'
 import { ChannelStore } from './ChannelState'
-
-// Mock BroadcastChannel and IndexedDB
-import { MockBroadcastChannel } from './__mocks__/mockBroadcastChannel'
 
 const mockPostMessage = vi.fn()
 const mockAddEventListener = vi.fn()
@@ -44,7 +40,6 @@ Object.defineProperty(global, 'indexedDB', {
 
 describe('ChannelStore', () => {
   beforeEach(() => {
-    MockBroadcastChannel.clearAllChannels()
     vi.clearAllMocks()
     vi.useFakeTimers()
     mockPostMessage.mockRestore()
@@ -85,11 +80,11 @@ describe('ChannelStore', () => {
     expect(mockPostMessage).toHaveBeenCalledWith({
       type: 'STATE_UPDATE',
       payload: 1,
-      senderId: expect.any(String),
+      senderId: expect.any(String) as string,
     })
   })
 
-  it('should receive updates from other tabs', async () => {
+  it('should receive updates from other tabs', () => {
     const store1 = new ChannelStore({ name: 'test-store', initial: 0 })
     const subscriber1 = vi.fn()
     store1.subscribe(subscriber1)
@@ -102,14 +97,18 @@ describe('ChannelStore', () => {
         senderId: 'some-other-id',
       },
     })
-    mockAddEventListener.mock.calls[0][1](messageEvent)
-    await vi.runAllTimers()
+
+    const eventHandler = mockAddEventListener.mock.calls[0][1] as EventListener
+
+    eventHandler(messageEvent)
+
+    vi.runAllTimers()
 
     expect(store1.get()).toBe(5)
     expect(subscriber1).toHaveBeenCalledWith(5)
   })
 
-  it('should request initial state from other tabs if not persisted and no initial value', async () => {
+  it('should request initial state from other tabs if not persisted and no initial value', () => {
     const store = new ChannelStore({
       name: 'test-store',
       initial: 0,
@@ -124,18 +123,23 @@ describe('ChannelStore', () => {
         senderId: 'some-other-id',
       },
     })
-    mockAddEventListener.mock.calls[0][1](messageEvent)
-    await vi.runAllTimers()
+    const eventHandler = mockAddEventListener.mock.calls[0][1] as EventListener
+
+    eventHandler(messageEvent)
+    vi.runAllTimers()
 
     expect(store.get()).toBe(10)
   })
 
   it('should destroy the store correctly', () => {
     const store = new ChannelStore({ name: 'test-store', initial: 0 })
-    store.subscribe(() => {})
+    store.subscribe(() => {
+      // empty
+    })
     store.destroy()
-    // expect(mockClose).toHaveBeenCalled() // No longer directly mockable
-    expect(store['_subscribers'].size).toBe(0)
+
+    // @ts-expect-error - Testing private key
+    expect(store._subscribers.size).toBe(0)
   })
 
   it('should reset the store to its initial value', async () => {
@@ -166,7 +170,9 @@ describe('ChannelStore', () => {
 
     // Simulate status change to ready (e.g., after initDB or loadCacheFromDB)
     store.status = 'ready'
-    store['_notifyStatusSubscribers']()
+
+    // @ts-expect-error - Testing private key
+    store._notifyStatusSubscribers()
     expect(statusSubscriber).toHaveBeenCalledWith('ready')
 
     statusSubscriber.mockClear()
@@ -174,11 +180,11 @@ describe('ChannelStore', () => {
     expect(statusSubscriber).toHaveBeenCalledWith('destroyed')
   })
 
-  it('should prevent set operations if the store is destroyed', async () => {
+  it('should prevent set operations if the store is destroyed', () => {
     const store = new ChannelStore({ name: 'test-store', initial: 0 })
     store.destroy()
     const initialValue = store.get()
-    await store.set(10)
+    store.set(10)
     expect(store.get()).toBe(initialValue) // Value should not change
     // expect(mockPostMessage).not.toHaveBeenCalledWith(
     //   expect.objectContaining({ payload: 10 }),
@@ -200,21 +206,20 @@ describe('ChannelStore', () => {
     const store = new ChannelStore({ name: 'test-store', initial: 0 })
     store.destroy()
     const subscriber = vi.fn()
-    const unsubscribe = store.subscribe(subscriber)
+    expect(() => store.subscribe(subscriber)).toThrow()
     store.set(10) // Attempt to trigger a change
     expect(subscriber).not.toHaveBeenCalled()
-    expect(unsubscribe).toBeInstanceOf(Function) // Still returns a function
   })
 
   it('should prevent new status subscriptions if the store is destroyed', () => {
     const store = new ChannelStore({ name: 'test-store', initial: 0 })
     store.destroy()
     const statusSubscriber = vi.fn()
-    const unsubscribe = store.subscribeStatus(statusSubscriber)
-    store.status = 'ready' // Attempt to change status
-    store['_notifyStatusSubscribers']() // Manually trigger notification
+    expect(() => store.subscribe(statusSubscriber)).toThrow()
+
+    // @ts-expect-error - Testing private key
+    store._notifyStatusSubscribers()
     expect(statusSubscriber).not.toHaveBeenCalled()
-    expect(unsubscribe).toBeInstanceOf(Function) // Still returns a function
   })
 
   it('should prevent destroy method itself if the store is already destroyed', () => {

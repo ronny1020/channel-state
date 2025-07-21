@@ -21,9 +21,13 @@ const countStore = new ChannelStore<number>({
   initial: 0,
 })
 
-const countSpan = document.querySelector<HTMLSpanElement>('#count')!
-const statusSpan = document.querySelector<HTMLSpanElement>('#status')!
-const incrementButton = document.querySelector<HTMLButtonElement>('#increment')!
+const countSpan = document.querySelector<HTMLSpanElement>('#count')
+const statusSpan = document.querySelector<HTMLSpanElement>('#status')
+const incrementButton = document.querySelector<HTMLButtonElement>('#increment')
+
+if (!countSpan || !statusSpan || !incrementButton) {
+  throw new Error('Missing DOM elements')
+}
 
 countSpan.innerText = countStore.get().toString()
 statusSpan.innerText = countStore.status

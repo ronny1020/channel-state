@@ -28,8 +28,14 @@ export default function App() {
   return (
     <div>
       <h1>React App Example</h1>
-      <p>Count: {count ?? 0}</p>
-      <button onClick={() => setCount((count ?? 0) + 1)}>Increment</button>
+      <p>Count: {count}</p>
+      <button
+        onClick={() => {
+          setCount(count + 1)
+        }}
+      >
+        Increment
+      </button>
     </div>
   )
 }

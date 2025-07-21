@@ -10,6 +10,6 @@
     },
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../__mocks__/**/*"],
   "exclude": ["dist", "node_modules"]
 }

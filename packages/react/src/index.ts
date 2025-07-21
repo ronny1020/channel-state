@@ -44,7 +44,7 @@ import type { ChannelStore } from '@channel-state/core'
  */
 export function useChannelState<T>(store: ChannelStore<T>) {
   const value = useSyncExternalStore(
-    store.subscribe.bind(store),
+    (onStoreChange) => store.subscribe(onStoreChange),
     () => store.get(),
     () => store.get(),
   )
@@ -76,7 +76,7 @@ export function useChannelState<T>(store: ChannelStore<T>) {
  */
 export function useChannelStatus(store: ChannelStore<unknown>) {
   const status = useSyncExternalStore(
-    store.subscribeStatus,
+    (onStoreStatusChange) => store.subscribeStatus(onStoreStatusChange),
     () => store.status,
     () => store.status,
   )

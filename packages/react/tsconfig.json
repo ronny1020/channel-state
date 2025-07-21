@@ -7,12 +7,11 @@
     "noEmit": false,
     "declaration": true,
     "emitDeclarationOnly": true,
-    "outDir": "./dist",
     "paths": {
       "@channel-state/core": ["../core/dist"]
     },
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../__mocks__/**/*"],
   "exclude": ["node_modules"]
 }

@@ -1,7 +1,23 @@
-import { ChannelStore, StoreStatus } from '@channel-state/core'
+import {
+  ChannelStore,
+  ChannelStoreOptions,
+  StoreStatus,
+} from '@channel-state/core'
 import { useChannelState, useChannelStatus } from './index'
 import { get } from 'svelte/store'
 import { tick } from 'svelte'
+import { createMockChannelStore } from '../../__mocks__/ChannelStore'
+
+vi.mock('@channel-state/core', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@channel-state/core')>()
+  return {
+    ...mod,
+    ChannelStore: vi.fn(
+      <T>(options: ChannelStoreOptions<T>) =>
+        createMockChannelStore<T>(options.initial) as ChannelStore<T>,
+    ),
+  }
+})
 
 describe('useChannelState in Svelte', () => {
   let store: ChannelStore<number>
@@ -26,8 +42,8 @@ describe('useChannelState in Svelte', () => {
       updatedValue = value
     })
 
-    await store.set(5) // Ensure the ChannelStore update completes
-    await tick() // Wait for Svelte's updates
+    store.set(5)
+    await tick()
     expect(updatedValue).toBe(5)
     unsubscribe()
   })
@@ -65,7 +81,6 @@ describe('useChannelStatus in Svelte', () => {
     expect(currentStatus).toBe('initializing')
 
     store.destroy()
-    // Wait for the next microtask tick to allow Svelte store to update
     await tick()
 
     expect(currentStatus).toBe('destroyed')

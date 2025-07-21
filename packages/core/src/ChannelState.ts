@@ -15,6 +15,24 @@
  */
 
 /**
+ * Represents the types of messages that can be sent between stores.
+ * - 'STATE_REQUEST': A request for the current state of the store.
+ * - 'STATE_UPDATE': An update to the state of the store.
+ */
+export type StoreBroadcastMessageType = 'STATE_REQUEST' | 'STATE_UPDATE'
+
+/**
+ * Represents a message sent between stores.
+ * @template T The type of the payload.
+ * @remarks This interface is used for both sending and receiving messages between stores.
+ **/
+export interface StoreBroadcastMessage<T> {
+  type: StoreBroadcastMessageType
+  senderId: string
+  payload: T
+}
+
+/**
  * Represents the status of the ChannelStore.
  * - 'initializing': The store is initializing.
  * - 'ready': The store is ready to be used.
@@ -138,7 +156,7 @@ export class ChannelStore<T> {
     const tx = this._db.transaction(this._prefixedName, 'readonly')
     const store = tx.objectStore(this._prefixedName)
 
-    const req = store.get(this._dbKey)
+    const req = store.get(this._dbKey) as IDBRequest<T>
     req.onsuccess = () => {
       const val = req.result
       if (val === undefined) {
@@ -180,15 +198,17 @@ export class ChannelStore<T> {
 
   /**
    * Handles messages received from the BroadcastChannel, updating the cache and notifying subscribers.
-   * @param e The MessageEvent containing the broadcasted data.
+   * @param messageEvent The MessageEvent containing the broadcasted data.
    * @private
    */
-  private _handleBroadcast = (e: MessageEvent) => {
+  private _handleBroadcast = (
+    messageEvent: MessageEvent<StoreBroadcastMessage<T>>,
+  ) => {
     if (this.status === 'destroyed') {
       return
     }
 
-    const message = e.data
+    const message = messageEvent.data
 
     if (message.senderId === this._instanceId) {
       return // Ignore messages from self
@@ -200,16 +220,18 @@ export class ChannelStore<T> {
         payload: this._value,
         senderId: this._instanceId,
       })
-    } else if (message.type === 'STATE_UPDATE') {
-      if (this._initialStateRequestTimeout) {
-        clearTimeout(this._initialStateRequestTimeout)
-        this._initialStateRequestTimeout = null
-      }
-      this._value = message.payload
-      this.status = 'ready'
-      this._notifySubscribers()
-      this._notifyStatusSubscribers()
+
+      return
     }
+
+    if (this._initialStateRequestTimeout) {
+      clearTimeout(this._initialStateRequestTimeout)
+      this._initialStateRequestTimeout = null
+    }
+    this._value = message.payload
+    this.status = 'ready'
+    this._notifySubscribers()
+    this._notifyStatusSubscribers()
   }
 
   /**
@@ -217,11 +239,15 @@ export class ChannelStore<T> {
    * @private
    */
   private _notifySubscribers() {
-    this._subscribers.forEach((subscriber) => subscriber(this._value))
+    this._subscribers.forEach((subscriber) => {
+      subscriber(this._value)
+    })
   }
 
   private _notifyStatusSubscribers() {
-    this._statusSubscribers.forEach((subscriber) => subscriber(this.status))
+    this._statusSubscribers.forEach((subscriber) => {
+      subscriber(this.status)
+    })
   }
 
   /**
@@ -254,7 +280,7 @@ export class ChannelStore<T> {
    * @param value The new state value to set.
    * @returns A Promise that resolves when the state has been set and persisted (if applicable).
    */
-  async set(value: T): Promise<void> {
+  set(value: T): void {
     if (this.status === 'destroyed') {
       return
     }
@@ -265,8 +291,14 @@ export class ChannelStore<T> {
       return
     }
 
-    const db = this._db
-    return new Promise((resolve, reject) => {
+    void new Promise<void>((resolve, reject) => {
+      const db = this._db
+
+      if (!db) {
+        reject(new Error('Database not initialized'))
+        return
+      }
+
       const tx = db.transaction(this._prefixedName, 'readwrite')
       const store = tx.objectStore(this._prefixedName)
       const req = store.put(value, this._dbKey)
@@ -275,7 +307,9 @@ export class ChannelStore<T> {
         this._triggerChange()
         resolve()
       }
-      req.onerror = () => reject(req.error)
+      req.onerror = () => {
+        reject(new Error(req.error?.message ?? 'unknown error'))
+      }
     })
   }
 
@@ -286,7 +320,7 @@ export class ChannelStore<T> {
    */
   subscribe(callback: StoreChangeCallback<T>): () => void {
     if (this.status === 'destroyed') {
-      return () => {}
+      throw new Error('ChannelStore is destroyed')
     }
     this._subscribers.add(callback)
 
@@ -302,7 +336,7 @@ export class ChannelStore<T> {
    */
   subscribeStatus(callback: StoreStatusCallback): () => void {
     if (this.status === 'destroyed') {
-      return () => {}
+      throw new Error('ChannelStore is destroyed')
     }
     this._statusSubscribers.add(callback)
 
@@ -348,7 +382,13 @@ export class ChannelStore<T> {
 
     return new Promise((resolve, reject) => {
       const db = this._db
-      const tx = db!.transaction(this._prefixedName, 'readwrite')
+
+      if (!db) {
+        reject(new Error('IndexedDB is not available'))
+        return
+      }
+
+      const tx = db.transaction(this._prefixedName, 'readwrite')
       const store = tx.objectStore(this._prefixedName)
       const req = store.put(this._initial, this._dbKey)
 
@@ -356,7 +396,9 @@ export class ChannelStore<T> {
         this._triggerChange()
         resolve()
       }
-      req.onerror = () => reject(req.error)
+      req.onerror = () => {
+        reject(new Error(req.error?.message ?? 'unknown error'))
+      }
     })
   }
 }

@@ -31,10 +31,10 @@ import { ChannelStore } from '@channel-state/core'
  *          Assigning a new value to this `Ref` will update the ChannelStore's state.
  */
 export function useChannelState<T>(store: ChannelStore<T>) {
-  const state = ref<T>(store.get())
+  const state = ref(store.get())
 
-  const unsubscribe = store.subscribe(() => {
-    state.value = store.get()
+  const unsubscribe = store.subscribe((value) => {
+    state.value = value
   })
 
   onUnmounted(() => {
@@ -43,7 +43,7 @@ export function useChannelState<T>(store: ChannelStore<T>) {
 
   return computed<T>({
     get() {
-      return state.value
+      return state.value as T
     },
     set(newValue: T) {
       store.set(newValue)

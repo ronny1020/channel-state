@@ -1,8 +1,20 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+/* eslint-disable vue/one-component-per-file */
 import { mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
-import { ChannelStore } from '@channel-state/core'
+import { ChannelStore, ChannelStoreOptions } from '@channel-state/core'
 import { useChannelState, useChannelStatus } from './index'
+import { createMockChannelStore } from '../../__mocks__/ChannelStore'
+
+vi.mock('@channel-state/core', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@channel-state/core')>()
+  return {
+    ...mod,
+    ChannelStore: vi.fn(
+      <T>(options: ChannelStoreOptions<T>) =>
+        createMockChannelStore<T>(options.initial) as ChannelStore<T>,
+    ),
+  }
+})
 
 describe('useChannelState in Vue', () => {
   let store: ChannelStore<number>
@@ -60,7 +72,7 @@ describe('useChannelState in Vue', () => {
     expect(wrapper.text()).toContain('Count: 0')
 
     store.set(5)
-    await wrapper.vm.$nextTick() // Wait for Vue to react to changes
+    await wrapper.vm.$nextTick()
     expect(wrapper.text()).toContain('Count: 5')
   })
 })

@@ -33,14 +33,14 @@ A Svelte store that provides access to a `ChannelStore`'s state. The returned st
 
 ```svelte
 <script lang="ts">
-  import { useChannelState } from '@channel-state/svelte';
-  import { ChannelStore } from '@channel-state/core';
+  import { useChannelState } from '@channel-state/svelte'
+  import { ChannelStore } from '@channel-state/core'
 
-  const countStore = new ChannelStore<number>({ name: 'count', initial: 0 });
-  const count = useChannelState(countStore);
+  const countStore = new ChannelStore<number>({ name: 'count', initial: 0 })
+  const count = useChannelState(countStore)
 
   function increment() {
-    $count++;
+    $count++
   }
 </script>
 
@@ -58,11 +58,11 @@ A Svelte store that provides access to a `ChannelStore`'s status.
 
 ```svelte
 <script lang="ts">
-  import { useChannelStatus } from '@channel-state/svelte';
-  import { ChannelStore } from '@channel-state/core';
+  import { useChannelStatus } from '@channel-state/svelte'
+  import { ChannelStore } from '@channel-state/core'
 
-  const countStore = new ChannelStore<number>({ name: 'count', initial: 0 });
-  const status = useChannelStatus(countStore);
+  const countStore = new ChannelStore<number>({ name: 'count', initial: 0 })
+  const status = useChannelStatus(countStore)
 </script>
 
 <p>Status: {$status}</p>
