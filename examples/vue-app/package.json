@@ -1,14 +1,13 @@
 {
   "name": "vue-app",
-  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
+    "dev": "vite",
+    "lint": "eslint . --fix",
     "preview": "vite preview",
-    "typecheck": "vue-tsc --noEmit",
-    "lint": "eslint . --fix"
+    "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@channel-state/core": "workspace:*",
