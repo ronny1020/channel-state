@@ -13,7 +13,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 8
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -23,6 +23,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: build packages
+        run: pnpm run build
+
+      - name: Run Format Check
+        run: pnpm run format:check
 
       - name: Run Lint Check
         run: pnpm run lint:check
@@ -36,11 +42,9 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # Not strictly required for public repos, but good practice
-          files: ./coverage/lcov.info # Adjust if your coverage report is elsewhere
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
 
       - name: Run Audit for Vulnerabilities
         run: pnpm audit --audit-level=moderate || true # Allow audit to fail without failing the workflow
 
-      - name: Run Format Check
-        run: pnpm run format:check

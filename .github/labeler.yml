@@ -1,0 +1,30 @@
+core:
+  - 'packages/core/**/*'
+
+react:
+  - 'packages/react/**/*'
+
+svelte:
+  - 'packages/svelte/**/*'
+
+vue:
+  - 'packages/vue/**/*'
+
+examples:
+  - 'examples/**/*'
+
+documentation:
+  - '**/*.md'
+
+test:
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - 'vitest.config.ts'
+  - 'vitest.setup.ts'
+
+root:
+  - '.*'
+  - '*'
+
+github:
+  - '.github/**/*'
