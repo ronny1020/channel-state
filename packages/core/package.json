@@ -1,28 +1,28 @@
 {
   "name": "@channel-state/core",
-  "version": "1.0.0",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
   },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs",
     "dev": "tsup src/index.ts",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
-    "typecheck": "tsc --noEmit",
     "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json",
     "lint": "eslint . --fix",
-    "lint:check": "eslint ."
-  },
-  "license": "Apache-2.0"
+    "lint:check": "eslint .",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "typecheck": "tsc --noEmit"
+  }
 }

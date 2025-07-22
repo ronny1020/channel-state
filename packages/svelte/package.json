@@ -1,39 +1,39 @@
 {
   "name": "@channel-state/svelte",
-  "version": "1.0.0",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
   },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs",
     "dev": "tsup src/index.ts",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
     "format": "prettier --write 'src/**/*.{ts,tsx,svelte}' --config ../../.prettierrc.json",
     "lint": "eslint . --fix",
-    "lint:check": "eslint ."
+    "lint:check": "eslint .",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "typecheck": "tsc --noEmit"
   },
-  "license": "Apache-2.0",
   "dependencies": {
     "@channel-state/core": "workspace:*"
-  },
-  "peerDependencies": {
-    "svelte": ">=3.0.0"
   },
   "devDependencies": {
     "@testing-library/svelte": "^4.0.0",
     "@tsconfig/svelte": "^5.0.4",
     "svelte": "4.2.20"
+  },
+  "peerDependencies": {
+    "svelte": ">=3.0.0"
   }
 }
