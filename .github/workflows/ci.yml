@@ -27,6 +27,9 @@ jobs:
       - name: build packages
         run: pnpm run build
 
+      - name: Run Format Check
+        run: pnpm run format:check
+
       - name: Run Lint Check
         run: pnpm run lint:check
 
@@ -45,5 +48,3 @@ jobs:
       - name: Run Audit for Vulnerabilities
         run: pnpm audit --audit-level=moderate || true # Allow audit to fail without failing the workflow
 
-      - name: Run Format Check
-        run: pnpm run format:check
