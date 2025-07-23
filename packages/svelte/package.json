@@ -1,7 +1,21 @@
 {
   "name": "@channel-state/svelte",
   "version": "0.0.1",
+  "homepage": "https://github.com/ronny1020/channel-state",
+  "bugs": {
+    "url": "https://github.com/ronny1020/channel-state/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ronny1020/channel-state.git",
+    "directory": "packages/svelte"
+  },
   "license": "Apache-2.0",
+  "author": {
+    "name": "Ronny",
+    "email": "ronny1020@gmail.com",
+    "url": "https://github.com/ronny1020"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -10,17 +24,20 @@
     }
   },
   "main": "./dist/index.js",
+  "jsdelivr": "./dist/index.global.js",
+  "unpkg": "./dist/index.global.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm,cjs",
+    "build": "tsup",
     "dev": "tsup src/index.ts",
-    "format": "prettier --write 'src/**/*.{ts,tsx,svelte}' --config ../../.prettierrc.json",
+    "format": "prettier --write . --config ../../.prettierrc.json",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
+    "prepublishOnly": "pnpm i && pnpm format && pnpm lint && pnpm test && pnpm build",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "typecheck": "tsc --noEmit"
@@ -35,5 +52,8 @@
   },
   "peerDependencies": {
     "svelte": ">=3.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

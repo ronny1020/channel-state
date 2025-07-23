@@ -6,7 +6,9 @@
     "build": "vite build",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "dev": "vite",
+    "format": "prettier --write . --config ../../.prettierrc.json",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {

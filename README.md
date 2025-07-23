@@ -34,6 +34,43 @@ For framework-specific packages, see their respective READMEs:
 - [Vue Package README](./packages/vue/README.md)
 - [Svelte Package README](./packages/svelte/README.md)
 
+### CDN Usage
+
+For direct usage in the browser, you can use the UMD builds from a CDN like jsDelivr or unpkg. It is highly recommended to pin the version in the URL to avoid unexpected breaking changes. You can replace `@0` with a specific version.
+
+When using the CDN build, make sure to include the necessary peer dependencies for the package you are using.
+
+**Core Package:**
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/core@0"></script>
+```
+
+**React Package:**
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/core@0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/react@0"></script>
+```
+
+**Vue Package:**
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/core@0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/vue@0"></script>
+```
+
+**Svelte Package:**
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/svelte@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/core@0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/svelte@0"></script>
+```
+
 ## Usage
 
 For detailed usage of the core library, please refer to the [Core Package README](./packages/core/README.md).

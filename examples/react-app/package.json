@@ -5,8 +5,9 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "format": "prettier --write 'src/**/*.{ts,tsx}' --config ../../.prettierrc.json",
+    "format": "prettier --write . --config ../../.prettierrc.json",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
