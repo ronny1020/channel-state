@@ -2,9 +2,7 @@
   "name": "@channel-state/react",
   "version": "0.0.1",
   "homepage": "https://github.com/ronny1020/channel-state",
-  "bugs": {
-    "url": "https://github.com/ronny1020/channel-state/issues"
-  },
+  "bugs": "https://github.com/ronny1020/channel-state/issues",
   "repository": {
     "type": "git",
     "url": "https://github.com/ronny1020/channel-state.git",
@@ -19,8 +17,8 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "main": "./dist/index.js",
@@ -37,22 +35,20 @@
     "format": "prettier --write . --config ../../.prettierrc.json",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
-    "prepublishOnly": "pnpm i && pnpm format && pnpm lint && pnpm test && pnpm build",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@channel-state/core": "workspace:*"
-  },
   "devDependencies": {
+    "@channel-state/core": "workspace:*",
     "@testing-library/react": "^16.3.0",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "peerDependencies": {
+    "@channel-state/core": "^0.0.1",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
   },
