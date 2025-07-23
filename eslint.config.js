@@ -29,7 +29,7 @@ export default [
       'prettier/prettier': 'error',
       'require-jsdoc': 'off',
       'valid-jsdoc': 'off',
-      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-console': ['error', { allow: ['warn', 'error', 'log'] }],
     },
   },
   ...tseslint.configs.recommended.map((config) => ({
@@ -39,6 +39,7 @@ export default [
       'examples/**/src/**/*.{ts,tsx}',
       'packages/**/vitest.config.ts',
       'examples/**/vite.config.ts',
+      'scripts/**/*.ts',
     ],
   })),
   ...tseslint.configs.strictTypeChecked.map((config) => ({
@@ -48,6 +49,7 @@ export default [
       'examples/**/src/**/*.{ts,tsx}',
       'packages/**/vitest.config.ts',
       'examples/**/vite.config.ts',
+      'scripts/**/*.ts',
     ],
     languageOptions: {
       ...config.languageOptions,
@@ -57,6 +59,7 @@ export default [
           './tsconfig.base.json',
           './packages/*/tsconfig.json',
           './examples/*/tsconfig.json',
+          './scripts/tsconfig.json',
         ],
         tsconfigRootDir: import.meta.dirname,
       },
@@ -69,6 +72,7 @@ export default [
       'examples/**/src/**/*.{ts,tsx}',
       'packages/**/vitest.config.ts',
       'examples/**/vite.config.ts',
+      'scripts/**/*.ts',
     ],
     languageOptions: {
       ...config.languageOptions,
@@ -78,6 +82,7 @@ export default [
           './tsconfig.base.json',
           './packages/*/tsconfig.json',
           './examples/*/tsconfig.json',
+          './scripts/tsconfig.json',
         ],
         tsconfigRootDir: import.meta.dirname,
       },
@@ -89,6 +94,7 @@ export default [
       'examples/**/src/**/*.{ts,tsx}',
       'packages/**/vitest.config.ts',
       'examples/**/vite.config.ts',
+      'scripts/**/*.ts',
     ],
     rules: {
       '@typescript-eslint/no-unused-vars': [

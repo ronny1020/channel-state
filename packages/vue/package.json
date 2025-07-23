@@ -2,9 +2,7 @@
   "name": "@channel-state/vue",
   "version": "0.0.1",
   "homepage": "https://github.com/ronny1020/channel-state",
-  "bugs": {
-    "url": "https://github.com/ronny1020/channel-state/issues"
-  },
+  "bugs": "https://github.com/ronny1020/channel-state/issues",
   "repository": {
     "type": "git",
     "url": "https://github.com/ronny1020/channel-state.git",
@@ -19,8 +17,8 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "main": "./dist/index.js",
@@ -37,20 +35,18 @@
     "format": "prettier --write . --config ../../.prettierrc.json",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
-    "prepublishOnly": "pnpm i && pnpm format && pnpm lint && pnpm test && pnpm build",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@channel-state/core": "workspace:*"
-  },
   "devDependencies": {
+    "@channel-state/core": "workspace:*",
     "@types/vue": "^2.0.0",
     "@vue/test-utils": "^2.4.6",
-    "vue": "^3.0.0"
+    "vue": "^3.4.21"
   },
   "peerDependencies": {
+    "@channel-state/core": "^0.0.1",
     "vue": ">=3.0.0"
   },
   "publishConfig": {
