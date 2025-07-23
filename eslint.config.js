@@ -29,7 +29,7 @@ export default [
       'prettier/prettier': 'error',
       'require-jsdoc': 'off',
       'valid-jsdoc': 'off',
-      'no-console': ['error', { allow: ['warn', 'error', 'log'] }],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
     },
   },
   ...tseslint.configs.recommended.map((config) => ({

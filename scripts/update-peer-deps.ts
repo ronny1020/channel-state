@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 
@@ -60,7 +61,7 @@ function updatePeerDependencies() {
       }
     } catch (error: unknown) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        // console.warn(`Skipping non-existent package.json: ${packageJsonPath}`);
+        console.warn(`Skipping non-existent package.json: ${packageJsonPath}`)
       } else {
         console.error(
           `Error processing ${packageJsonPath}:`,
