@@ -1,6 +1,22 @@
 {
   "name": "@channel-state/core",
   "version": "0.0.1",
+  "description": "Core-library for channel-state, providing framework-agnostic, zero-dependency state management with cross-context synchronization and persistence.",
+  "keywords": [
+    "channel",
+    "channel-state",
+    "state",
+    "state-management",
+    "vanilla",
+    "typescript",
+    "event-driven",
+    "cross-tab",
+    "cross-window",
+    "broadcast-channel",
+    "indexeddb",
+    "zero-dependency",
+    "persistence"
+  ],
   "homepage": "https://github.com/ronny1020/channel-state",
   "bugs": "https://github.com/ronny1020/channel-state/issues",
   "repository": {
@@ -14,6 +30,7 @@
     "email": "ronny1020@gmail.com",
     "url": "https://github.com/ronny1020"
   },
+  "sideEffects": false,
   "type": "module",
   "exports": {
     ".": {

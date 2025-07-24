@@ -1,6 +1,10 @@
 {
   "name": "vue-app",
   "private": true,
+  "keywords": [
+    "channel-state-example",
+    "vue-app"
+  ],
   "type": "module",
   "scripts": {
     "build": "vite build",
