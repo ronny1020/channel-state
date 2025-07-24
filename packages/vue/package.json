@@ -1,6 +1,6 @@
 {
   "name": "@channel-state/vue",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Vue composables for channel-state, providing seamless integration with Vue applications for cross-context state management.",
   "keywords": [
     "channel",
@@ -65,7 +65,7 @@
     "vue": "^3.4.21"
   },
   "peerDependencies": {
-    "@channel-state/core": "^0.0.1",
+    "@channel-state/core": "^0.0.2",
     "vue": ">=3.0.0"
   },
   "publishConfig": {

@@ -1,6 +1,6 @@
 {
   "name": "@channel-state/svelte",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Svelte stores for channel-state, providing seamless integration with Svelte applications for cross-context state management.",
   "keywords": [
     "channel",
@@ -64,7 +64,7 @@
     "svelte": "^5.0.0"
   },
   "peerDependencies": {
-    "@channel-state/core": "^0.0.1",
+    "@channel-state/core": "^0.0.2",
     "svelte": ">=3.0.0"
   },
   "publishConfig": {
