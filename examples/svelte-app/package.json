@@ -1,6 +1,10 @@
 {
   "name": "svelte-app",
   "private": true,
+  "keywords": [
+    "channel-state-example",
+    "svelte-app"
+  ],
   "type": "module",
   "scripts": {
     "build": "vite build",

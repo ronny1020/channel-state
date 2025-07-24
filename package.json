@@ -1,6 +1,24 @@
 {
   "name": "@channel-state/workspace",
   "private": true,
+  "keywords": [
+    "channel",
+    "channel-state",
+    "state",
+    "state-management",
+    "vanilla",
+    "react",
+    "vue",
+    "svelte",
+    "typescript",
+    "event-driven",
+    "cross-tab",
+    "cross-window",
+    "broadcast-channel",
+    "indexeddb",
+    "zero-dependency",
+    "persistence"
+  ],
   "homepage": "https://github.com/ronny1020/channel-state",
   "bugs": {
     "url": "https://github.com/ronny1020/channel-state/issues"
@@ -20,8 +38,8 @@
     "build": "pnpm -r --filter='./packages/*' run build",
     "build:core": "pnpm --filter='@channel-state/core' run build",
     "build:packages": "pnpm -r --filter='./packages/*' run build",
-    "clean": "pnpm -r run clean && rimraf node_modules",
     "check:all": "pnpm i && pnpm run build && pnpm run test && pnpm run typecheck && pnpm run format && pnpm run lint",
+    "clean": "pnpm -r run clean && rimraf node_modules",
     "dev": "pnpm -r --parallel run dev",
     "dev:core": "pnpm --filter='@channel-state/core' run dev",
     "dev:core-example": "pnpm --filter='core-app' run dev",

@@ -1,6 +1,24 @@
 {
   "name": "@channel-state/vue",
   "version": "0.0.1",
+  "description": "Vue composables for channel-state, providing seamless integration with Vue applications for cross-context state management.",
+  "keywords": [
+    "channel",
+    "channel-state",
+    "state",
+    "state-management",
+    "vue",
+    "vue-composable",
+    "use-channel-state",
+    "typescript",
+    "event-driven",
+    "cross-tab",
+    "cross-window",
+    "broadcast-channel",
+    "indexeddb",
+    "zero-dependency",
+    "persistence"
+  ],
   "homepage": "https://github.com/ronny1020/channel-state",
   "bugs": "https://github.com/ronny1020/channel-state/issues",
   "repository": {
@@ -14,6 +32,7 @@
     "email": "ronny1020@gmail.com",
     "url": "https://github.com/ronny1020"
   },
+  "sideEffects": false,
   "type": "module",
   "exports": {
     ".": {

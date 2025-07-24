@@ -1,6 +1,10 @@
 {
   "name": "core-app",
   "private": true,
+  "keywords": [
+    "channel-state-example",
+    "core-app"
+  ],
   "type": "module",
   "scripts": {
     "build": "tsc && vite build",
