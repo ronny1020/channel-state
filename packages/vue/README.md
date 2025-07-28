@@ -1,69 +1,118 @@
-## `@channel-state/vue`
+<h1 align="center">💚 @channel-state/vue</h1>
 
-`@channel-state/vue` offers a comprehensive set of Vue Composition API composables, expertly crafted to simplify the integration of `channel-state` with your Vue 3 applications. It provides reactive references to your `ChannelStore`'s state and status, ensuring flawless, real-time synchronization across diverse browser contexts. This package empowers Vue developers to build dynamic, multi-instance applications with inherent state consistency and an enhanced development workflow.
+<p align="center">
+  <strong>Official Vue Composables for <code>channel-state</code>.</strong>
+</p>
 
-### Features
+<p align="center">
+  <a href="https://www.npmjs.com/package/@channel-state/vue">
+    <img src="https://img.shields.io/npm/v/@channel-state/vue.svg" alt="NPM Version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@channel-state/vue">
+    <img src="https://img.shields.io/npm/dm/@channel-state/vue.svg" alt="NPM Downloads" />
+  </a>
+  <a href="https://github.com/ronny1020/channel-state/blob/main/packages/vue/LICENSE">
+    <img src="https://img.shields.io/npm/l/@channel-state/vue?label=license&color=blue" alt="License" />
+  </a>
+</p>
 
-- **Vue Composables:** Provides idiomatic Vue Composition API composables (`useChannelState` and `useChannelStatus`) for easy state and status management.
-- **Reactivity:** The state and status returned are Vue `ref`s, ensuring full reactivity within your Vue components.
-- **Seamless Integration:** Designed to work effortlessly with your existing Vue components and the `@channel-state/core` library.
+## Overview
 
-### Installation
+`@channel-state/vue` provides a set of idiomatic Vue Composition API composables for integrating `channel-state` into your Vue 3 applications. It makes it easy to create reactive, synchronized user interfaces that work across multiple browser contexts.
 
-You can install `@channel-state/vue` using your favorite package manager:
+## Installation
 
 ```bash
 pnpm add @channel-state/core @channel-state/vue
-# or
-npm install @channel-state/core @channel-state/vue
-# or
-yarn add @channel-state/core @channel-state/vue
 ```
 
-### API
+## CDN Usage
 
-#### `useChannelState<T>(store: ChannelStore<T>): Ref<T>`
+For direct usage in the browser, you can use the UMD builds from a CDN like jsDelivr or unpkg. Note that you must also include the `vue` and `@channel-state/core` packages.
 
-A Vue Composition API hook that provides a reactive reference to a `ChannelStore`'s state. The returned `Ref` can be used directly in Vue templates and will automatically update when the store's state changes (either locally or from other tabs/windows).
+```html
+<script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/core@0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/vue@0"></script>
+```
 
-- `store`: The `ChannelStore` instance to connect to.
-- **Returns:** A `Ref` object that represents the current state of the `ChannelStore`. Assigning a new value to this `Ref` will update the `ChannelStore`'s state.
+## API Reference
 
-##### Example
+### `useChannelState<T>`
+
+A Vue `ref` that is connected to a `ChannelStore`'s state.
+
+| Parameter | Type              | Description                                |
+| --------- | ----------------- | ------------------------------------------ |
+| `store`   | `ChannelStore<T>` | The `ChannelStore` instance to connect to. |
+
+| Returns | Type     | Description                                                                                                 |
+| ------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| `ref`   | `Ref<T>` | A Vue `ref`. Its `.value` property holds the current state, and updating it will update the `ChannelStore`. |
+
+### `useChannelStatus<T>`
+
+A Vue `ref` that is connected to a `ChannelStore`'s status.
+
+| Parameter | Type              | Description                                |
+| --------- | ----------------- | ------------------------------------------ |
+| `store`   | `ChannelStore<T>` | The `ChannelStore` instance to connect to. |
+
+| Returns | Type               | Description                                                                                                               |
+| ------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `ref`   | `Ref<StoreStatus>` | A Vue `ref` whose `.value` property holds the current status of the store: `'initializing'`, `'ready'`, or `'destroyed'`. |
+
+## Example Usage
+
+First, create a `ChannelStore` instance and export it. This should be done in a separate `.ts` file to be shared across your components.
+
+```typescript
+// src/store.ts
+import { ChannelStore } from '@channel-state/core'
+
+export const counterStore = new ChannelStore<number>({
+  name: 'shared-counter',
+  initial: 0,
+  persist: true,
+})
+```
+
+Now, you can use the composables in your Vue components:
 
 ```vue
 <script setup lang="ts">
-import { useChannelState } from '@channel-state/vue'
-import { ChannelStore } from '@channel-state/core'
+import { useChannelState, useChannelStatus } from '@channel-state/vue'
+import { counterStore } from '../store'
 
-const countStore = new ChannelStore<number>({ name: 'count', initial: 0 })
-const count = useChannelState(countStore)
+// useChannelState returns a reactive Vue ref.
+const count = useChannelState(counterStore)
+// useChannelStatus returns a reactive Vue ref for the status.
+const status = useChannelStatus(counterStore)
+
+// You can interact with the ref's .value property.
+function increment() {
+  count.value++
+}
+
+function decrement() {
+  count.value--
+}
+
+// You can also call methods directly on the original store instance.
+function reset() {
+  counterStore.reset()
+}
 </script>
 
 <template>
-  <button @click="count++">Count: {{ count }}</button>
-</template>
-```
-
-#### `useChannelStatus<T>(store: ChannelStore<T>): Ref<StoreStatus>`
-
-A Vue Composition API hook that provides a reactive reference to a `ChannelStore`'s status. The returned `Ref` reflects the current lifecycle status of the `ChannelStore`.
-
-- `store`: The `ChannelStore` instance to connect to.
-- **Returns:** A `Ref` object that represents the current status of the `ChannelStore` (`'initializing'`, `'ready'`, or `'destroyed'`).
-
-##### Example
-
-```vue
-<script setup lang="ts">
-import { useChannelStatus } from '@channel-state/vue'
-import { ChannelStore } from '@channel-state/core'
-
-const countStore = new ChannelStore<number>({ name: 'count', initial: 0 })
-const status = useChannelStatus(countStore)
-</script>
-
-<template>
-  <p>Status: {{ status }}</p>
+  <!-- It's good practice to handle the initializing state -->
+  <div v-if="status !== 'ready'">Loading state...</div>
+  <div v-else>
+    <h2>Counter</h2>
+    <p>Current count: {{ count }}</p>
+    <button @click="increment">Increment</button>
+    <button @click="decrement">Decrement</button>
+    <button @click="reset">Reset to Initial</button>
+  </div>
 </template>
 ```

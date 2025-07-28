@@ -1,69 +1,185 @@
-## `@channel-state/svelte`
+<h1 align="center">🔥 @channel-state/svelte</h1>
 
-`@channel-state/svelte` delivers a robust collection of Svelte stores, meticulously designed to simplify the integration of `channel-state` with your Svelte applications. It provides highly reactive and intuitive readable and writable stores for your `ChannelStore`'s state and status, ensuring seamless, real-time synchronization across all browser contexts. This package empowers Svelte developers to build dynamic, multi-instance applications with inherent state consistency and a significantly enhanced development experience.
+<p align="center">
+  <strong>Official Svelte stores for <code>channel-state</code>.</strong>
+</p>
 
-### Features
+<p align="center">
+  <a href="https://www.npmjs.com/package/@channel-state/svelte">
+    <img src="https://img.shields.io/npm/v/@channel-state/svelte.svg" alt="NPM Version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@channel-state/svelte">
+    <img src="https://img.shields.io/npm/dm/@channel-state/svelte.svg" alt="NPM Downloads" />
+  </a>
+  <a href="https://github.com/ronny1020/channel-state/blob/main/packages/svelte/LICENSE">
+    <img src="https://img.shields.io/npm/l/@channel-state/svelte?label=license&color=blue" alt="License" />
+  </a>
+</p>
 
-- **Svelte Stores:** Provides idiomatic Svelte stores (`useChannelState` and `useChannelStatus`) for easy state and status management.
-- **Reactivity:** The state and status returned are Svelte stores, ensuring full reactivity within your Svelte components.
-- **Seamless Integration:** Designed to work effortlessly with your existing Svelte components and the `@channel-state/core` library.
+## Overview
 
-### Installation
+`@channel-state/svelte` provides a set of idiomatic Svelte stores for integrating `channel-state` into your Svelte applications. It makes it easy to create reactive, synchronized user interfaces that work across multiple browser contexts.
 
-You can install `@channel-state/svelte` using your favorite package manager:
+## Installation
 
 ```bash
 pnpm add @channel-state/core @channel-state/svelte
-# or
-npm install @channel-state/core @channel-state/svelte
-# or
-yarn add @channel-state/core @channel-state/svelte
 ```
 
-### API
+## CDN Usage
 
-#### `useChannelState<T>(channelStore: ChannelStore<T>): Writable<T>`
+For direct usage in the browser, you can use the UMD builds from a CDN like jsDelivr or unpkg. Note that you must also include the `svelte` and `@channel-state/core` packages.
 
-A Svelte store that provides access to a `ChannelStore`'s state. The returned store is both readable and writable. Updates to the store will update the underlying `ChannelStore`, and changes in the `ChannelStore` (from other tabs/windows or local updates) will update the Svelte store.
-
-- `channelStore`: The `ChannelStore` instance to connect to.
-- **Returns:** A Svelte `Writable` store that represents the current state of the `ChannelStore`.
-
-##### Example
-
-```svelte
-<script lang="ts">
-  import { useChannelState } from '@channel-state/svelte'
-  import { ChannelStore } from '@channel-state/core'
-
-  const countStore = new ChannelStore<number>({ name: 'count', initial: 0 })
-  const count = useChannelState(countStore)
-
-  function increment() {
-    $count++
-  }
-</script>
-
-<button on:click={increment}>Count: {$count}</button>
+```html
+<script src="https://cdn.jsdelivr.net/npm/svelte@4/internal/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/core@0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/svelte@0"></script>
 ```
 
-#### `useChannelStatus<T>(channelStore: ChannelStore<T>): Readable<StoreStatus>`
+## API Reference
 
-A Svelte store that provides access to a `ChannelStore`'s status.
+### `useChannelState<T>`
 
-- `channelStore`: The `ChannelStore` instance to connect to.
-- **Returns:** A Svelte `Readable` store that represents the current status of the `ChannelStore` (`'initializing'`, `'ready'`, or `'destroyed'`).
+A Svelte `writable` store that is connected to a `ChannelStore`'s state.
 
-##### Example
+| Parameter      | Type              | Description                                |
+| -------------- | ----------------- | ------------------------------------------ |
+| `channelStore` | `ChannelStore<T>` | The `ChannelStore` instance to connect to. |
 
-```svelte
+| Returns | Type          | Description                                                                                                                 |
+| ------- | ------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `store` | `Writable<T>` | A Svelte `writable` store. Subscribing to it gives you the current state, and setting its value updates the `ChannelStore`. |
+
+### `useChannelStatus<T>`
+
+A Svelte `readable` store that is connected to a `ChannelStore`'s status.
+
+| Parameter      | Type              | Description                                |
+| -------------- | ----------------- | ------------------------------------------ |
+| `channelStore` | `ChannelStore<T>` | The `ChannelStore` instance to connect to. |
+
+| Returns | Type                    | Description                                                                                                             |
+| ------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `store` | `Readable<StoreStatus>` | A Svelte `readable` store that provides the current status of the store: `'initializing'`, `'ready'`, or `'destroyed'`. |
+
+## Example Usage
+
+First, create a `ChannelStore` instance and export it. This should be done in a separate `.ts` file to be shared across your components.
+
+```typescript
+// src/store.ts
+import { ChannelStore } from '@channel-state/core'
+
+export const counterStore = new ChannelStore<number>({
+  name: 'shared-counter',
+  initial: 0,
+  persist: true,
+})
+```
+
+Now, you can use the Svelte stores in your components:
+
+````svelte
 <script lang="ts">
-  import { useChannelStatus } from '@channel-state/svelte'
-  import { ChannelStore } from '@channel-state/core'
+  import { useChannelState, useChannelStatus } from '@channel-state/svelte';
+  import { counterStore } from '../store';
 
-  const countStore = new ChannelStore<number>({ name: 'count', initial: 0 })
-  const status = useChannelStatus(countStore)
+  // useChannelState returns a writable Svelte store.
+  const count = useChannelState(counterStore);
+  // useChannelStatus returns a readable Svelte store for the status.
+  const status = useChannelStatus(counterStore);
+
+  // You can interact with the store using the `<h1 align="center">🔥 @channel-state/svelte</h1>
+
+<p align="center">
+  <strong>Official Svelte stores for <code>channel-state</code>.</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@channel-state/svelte">
+    <img src="https://img.shields.io/npm/v/@channel-state/svelte.svg" alt="NPM Version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@channel-state/svelte">
+    <img src="https://img.shields.io/npm/dm/@channel-state/svelte.svg" alt="NPM Downloads" />
+  </a>
+  <a href="https://github.com/ronny1020/channel-state/blob/main/packages/svelte/LICENSE">
+    <img src="https://img.shields.io/npm/l/@channel-state/svelte?label=license&color=blue" alt="License" />
+  </a>
+</p>
+
+## Overview
+
+`@channel-state/svelte` provides a set of idiomatic Svelte stores for integrating `channel-state` into your Svelte applications. It makes it easy to create reactive, synchronized user interfaces that work across multiple browser contexts.
+
+## Installation
+
+```bash
+pnpm add @channel-state/core @channel-state/svelte
+````
+
+## CDN Usage
+
+For direct usage in the browser, you can use the UMD builds from a CDN like jsDelivr or unpkg. Note that you must also include the `svelte` and `@channel-state/core` packages.
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/svelte@4/internal/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/core@0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/svelte@0"></script>
+```
+
+## API Reference
+
+### `useChannelState<T>`
+
+A Svelte `writable` store that is connected to a `ChannelStore`'s state.
+
+| Parameter      | Type              | Description                                |
+| -------------- | ----------------- | ------------------------------------------ |
+| `channelStore` | `ChannelStore<T>` | The `ChannelStore` instance to connect to. |
+
+| Returns | Type          | Description                                                                                                                 |
+| ------- | ------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `store` | `Writable<T>` | A Svelte `writable` store. Subscribing to it gives you the current state, and setting its value updates the `ChannelStore`. |
+
+### `useChannelStatus<T>`
+
+A Svelte `readable` store that is connected to a `ChannelStore`'s status.
+
+| Parameter      | Type              | Description                                |
+| -------------- | ----------------- | ------------------------------------------ |
+| `channelStore` | `ChannelStore<T>` | The `ChannelStore` instance to connect to. |
+
+| Returns | Type                    | Description                                                                                                             |
+| ------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `store` | `Readable<StoreStatus>` | A Svelte `readable` store that provides the current status of the store: `'initializing'`, `'ready'`, or `'destroyed'`. |
+
+prefix.
+function increment() {
+$count++;
+}
+
+function decrement() {
+$count--;
+}
+
+// You can also call methods directly on the original store instance.
+function reset() {
+counterStore.reset();
+}
 </script>
 
-<p>Status: {$status}</p>
+<!-- It's good practice to handle the initializing state -->
+
+{#if $status !== 'ready'}
+
+  <div>Loading state...</div>
+{:else}
+  <div>
+    <h2>Counter</h2>
+    <p>Current count: {$count}</p>
+    <button on:click={increment}>Increment</button>
+    <button on:click={decrement}>Decrement</button>
+    <button on:click={reset}>Reset to Initial</button>
+  </div>
+{/if}
 ```
