@@ -16,17 +16,17 @@
   </a>
 </p>
 
-## Overview
+## 📖 Overview
 
 `@channel-state/vue` provides a set of idiomatic Vue Composition API composables for integrating `channel-state` into your Vue 3 applications. It makes it easy to create reactive, synchronized user interfaces that work across multiple browser contexts.
 
-## Installation
+## 🛠️ Installation
 
 ```bash
 pnpm add @channel-state/core @channel-state/vue
 ```
 
-## CDN Usage
+## 🌐 CDN Usage
 
 For direct usage in the browser, you can use the UMD builds from a CDN like jsDelivr or unpkg. Note that you must also include the `vue` and `@channel-state/core` packages.
 
@@ -36,7 +36,7 @@ For direct usage in the browser, you can use the UMD builds from a CDN like jsDe
 <script src="https://cdn.jsdelivr.net/npm/@channel-state/vue@0"></script>
 ```
 
-## API Reference
+## 📚 API Reference
 
 ### `useChannelState<T>`
 
@@ -62,7 +62,7 @@ A Vue `ref` that is connected to a `ChannelStore`'s status.
 | ------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | `ref`   | `Ref<StoreStatus>` | A Vue `ref` whose `.value` property holds the current status of the store: `'initializing'`, `'ready'`, or `'destroyed'`. |
 
-## Example Usage
+## 🚀 Example Usage
 
 First, create a `ChannelStore` instance and export it. This should be done in a separate `.ts` file to be shared across your components.
 

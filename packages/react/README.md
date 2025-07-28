@@ -16,17 +16,17 @@
   </a>
 </p>
 
-## Overview
+## 📖 Overview
 
 `@channel-state/react` provides a set of idiomatic React hooks for integrating `channel-state` into your React applications. It uses the `useSyncExternalStore` hook to ensure efficient, concurrent-safe updates, making it easy to build responsive and synchronized user interfaces.
 
-## Installation
+## 🛠️ Installation
 
 ```bash
 pnpm add @channel-state/core @channel-state/react
 ```
 
-## CDN Usage
+## 🌐 CDN Usage
 
 For direct usage in the browser, you can use the UMD builds from a CDN like jsDelivr or unpkg. Note that you must also include the `react`, `react-dom`, and `@channel-state/core` packages.
 
@@ -37,7 +37,7 @@ For direct usage in the browser, you can use the UMD builds from a CDN like jsDe
 <script src="https://cdn.jsdelivr.net/npm/@channel-state/react@0"></script>
 ```
 
-## API Reference
+## 📚 API Reference
 
 ### `useChannelState<T>`
 
@@ -64,7 +64,7 @@ A hook for accessing the status of a `ChannelStore`.
 | -------- | ------------- | ------------------------------------------------------------------------------- |
 | `status` | `StoreStatus` | The current status of the store: `'initializing'`, `'ready'`, or `'destroyed'`. |
 
-## Example Usage
+## 🚀 Example Usage
 
 First, create a `ChannelStore` instance and export it. This should be done in a separate file to be shared across your components.
 

@@ -16,17 +16,17 @@
   </a>
 </p>
 
-## Overview
+## 📖 Overview
 
 `@channel-state/core` is the foundational package of the `channel-state` ecosystem. It provides the `ChannelStore` class, a powerful, zero-dependency solution for state management that works in any JavaScript environment. It enables seamless, real-time state synchronization across browser tabs and windows using the native `BroadcastChannel` and `IndexedDB` APIs.
 
-## Installation
+## 🛠️ Installation
 
 ```bash
 pnpm add @channel-state/core
 ```
 
-## CDN Usage
+## 🌐 CDN Usage
 
 For direct usage in the browser, you can use the UMD build from a CDN like jsDelivr or unpkg:
 
@@ -34,7 +34,7 @@ For direct usage in the browser, you can use the UMD build from a CDN like jsDel
 <script src="https://cdn.jsdelivr.net/npm/@channel-state/core@0"></script>
 ```
 
-## API Reference
+## 📚 API Reference
 
 ### `ChannelStore<T>`
 
@@ -73,7 +73,7 @@ The primary class for creating and managing a synchronized state.
 | `destroy()`         | `(): void`                                              | Closes the `BroadcastChannel` and `IndexedDB` connections and cleans up all subscribers. The store instance cannot be used afterward. |
 | `reset()`           | `(): Promise<void>`                                     | Resets the state to its `initial` value and broadcasts the change.                                                                    |
 
-## Example Usage
+## 🚀 Example Usage
 
 ```typescript
 import { ChannelStore } from '@channel-state/core'

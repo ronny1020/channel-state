@@ -19,13 +19,13 @@
   </a>
 </p>
 
-## Overview
+## 📖 Overview
 
 `channel-state` is a lightweight, powerful state management library designed for modern web applications. It leverages the native `BroadcastChannel` API to seamlessly synchronize state across all browser contexts (tabs, windows, iframes) of the same origin. With an optional persistence layer using `IndexedDB`, it ensures your application's state can be restored across sessions, providing a fluid user experience.
 
 Built with TypeScript and with zero external dependencies, `channel-state` offers a minimal footprint and maximum flexibility. It includes dedicated, easy-to-use wrappers for popular frameworks like React, Vue, and Svelte, making integration a breeze.
 
-## Table of Contents
+## 📑 Table of Contents
 
 - [Common Use Cases](#-common-use-cases)
 - [Key Features](#-key-features)
