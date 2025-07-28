@@ -1,88 +1,125 @@
-## `@channel-state/core`
+<h1 align="center">📦 @channel-state/core</h1>
 
-`@channel-state/core` stands as the robust, foundational layer of `channel-state`. It introduces the powerful `ChannelStore` class, a meticulously engineered, zero-dependency state management solution. This core package empowers developers to achieve seamless, real-time state synchronization across disparate browser tabs, windows, and even diverse JavaScript frameworks. By intelligently leveraging the browser's native `BroadcastChannel` and `IndexedDB` APIs, `@channel-state/core` delivers an exceptionally reliable and persistent state management experience, forming the bedrock for highly interactive and consistent web applications.
+<p align="center">
+  <strong>The core, framework-agnostic library for <code>channel-state</code>.</strong>
+</p>
 
-### Features
+<p align="center">
+  <a href="https://www.npmjs.com/package/@channel-state/core">
+    <img src="https://img.shields.io/npm/v/@channel-state/core.svg" alt="NPM Version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@channel-state/core">
+    <img src="https://img.shields.io/npm/dm/@channel-state/core.svg" alt="NPM Downloads" />
+  </a>
+  <a href="https://github.com/ronny1020/channel-state/blob/main/packages/core/LICENSE">
+    <img src="https://img.shields.io/npm/l/@channel-state/core?label=license&color=blue" alt="License" />
+  </a>
+</p>
 
-- **Cross-tab and Cross-window State Sync:** Automatically synchronizes state across all open tabs and windows of the same origin.
-- **Persistent State:** Optionally persist state to `IndexedDB`, so your application's state is restored after a page reload or even when the browser is restarted.
-- **Framework Agnostic:** The core library is written in plain TypeScript and can be used in any JavaScript project.
-- **Lightweight and Zero-dependency:** The core library has no external dependencies, keeping your bundle size small.
+## 📖 Overview
 
-### `ChannelStore` Class
+`@channel-state/core` is the foundational package of the `channel-state` ecosystem. It provides the `ChannelStore` class, a powerful, zero-dependency solution for state management that works in any JavaScript environment. It enables seamless, real-time state synchronization across browser tabs and windows using the native `BroadcastChannel` and `IndexedDB` APIs.
 
-The `ChannelStore` class is the core of the `channel-state` library. It allows you to create and manage a state that can be shared and synchronized across multiple browser contexts.
+## 🛠️ Installation
+
+```bash
+pnpm add @channel-state/core
+```
+
+## 🌐 CDN Usage
+
+For direct usage in the browser, you can use the UMD build from a CDN like jsDelivr or unpkg:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@channel-state/core@0"></script>
+```
+
+## 📚 API Reference
+
+### `ChannelStore<T>`
+
+The primary class for creating and managing a synchronized state.
 
 #### Constructor
 
 `new ChannelStore<T>(options: ChannelStoreOptions<T>)`
 
-Creates a new `ChannelStore` instance.
+| Parameter | Type                  | Description                                           |
+| --------- | --------------------- | ----------------------------------------------------- |
+| `options` | `ChannelStoreOptions` | An object containing the configuration for the store. |
 
-- `options`: An object with the following properties:
-  - `name: string` (required): A unique name for the channel. This name is used for both `BroadcastChannel` and `IndexedDB`.
-  - `initial: T` (required): The initial state of the store.
-  - `persist?: boolean` (optional): Whether the store should persist its state to `IndexedDB`. Defaults to `false`.
+**`ChannelStoreOptions`**
+
+| Property  | Type      | Required | Default | Description                                                                                                  |
+| --------- | --------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `name`    | `string`  | Yes      | -       | A unique name for the channel. This is used for the `BroadcastChannel` and as the `IndexedDB` database name. |
+| `initial` | `T`       | Yes      | -       | The initial value of the state.                                                                              |
+| `persist` | `boolean` | No       | `false` | If `true`, the state will be persisted to `IndexedDB` and restored on initialization.                        |
 
 #### Properties
 
-- `status: StoreStatus`: The current status of the store, indicating its readiness and lifecycle phase. Possible values are `'initializing'`, `'ready'`, and `'destroyed'`.
+| Property | Type          | Description                                                                     |
+| -------- | ------------- | ------------------------------------------------------------------------------- |
+| `status` | `StoreStatus` | The current status of the store: `'initializing'`, `'ready'`, or `'destroyed'`. |
 
 #### Methods
 
-- `get(): T`
-  Synchronously retrieves the current state from the store.
+| Method              | Signature                                               | Description                                                                                                                           |
+| ------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `get()`             | `(): T`                                                 | Synchronously returns the current state.                                                                                              |
+| `set()`             | `(value: T): Promise<void>`                             | Asynchronously sets a new state, broadcasts it to other contexts, and persists it if `persist` is enabled.                            |
+| `subscribe()`       | `(callback: (value: T) => void): () => void`            | Subscribes to state changes. The callback receives the new state. Returns an `unsubscribe` function.                                  |
+| `subscribeStatus()` | `(callback: (status: StoreStatus) => void): () => void` | Subscribes to store status changes. The callback receives the new status. Returns an `unsubscribe` function.                          |
+| `destroy()`         | `(): void`                                              | Closes the `BroadcastChannel` and `IndexedDB` connections and cleans up all subscribers. The store instance cannot be used afterward. |
+| `reset()`           | `(): Promise<void>`                                     | Resets the state to its `initial` value and broadcasts the change.                                                                    |
 
-- `set(value: T): Promise<void>`
-  Sets a new value for the store's state. This updates the value, broadcasts the change to other tabs/windows, and optionally persists it to `IndexedDB` asynchronously.
-
-- `subscribe(callback: (value: T) => void): () => void`
-  Subscribes a callback function to state changes. The callback will be invoked whenever the state changes.
-  Returns an unsubscribe function that can be called to stop receiving updates.
-
-- `subscribeStatus(callback: (status: StoreStatus) => void): () => void`
-  Subscribes a callback function to status changes of the store. The callback will be invoked when the store's status changes (e.g., from 'initial' to 'ready').
-  Returns an unsubscribe function that can be called to stop receiving status updates.
-
-- `destroy(): void`
-  Cleans up resources used by the `ChannelStore`, including closing the `BroadcastChannel` and `IndexedDB` connection, and clearing all subscribers. After calling `destroy()`, the store can no longer be used.
-
-- `reset(): Promise<void>`
-  Resets the store's state to its initial value. This also triggers a change notification and persists the reset state if persistence is enabled.
-
-### Example Usage
+## 🚀 Example Usage
 
 ```typescript
 import { ChannelStore } from '@channel-state/core'
 
-const countStore = new ChannelStore<number>({
-  name: 'count', // A unique name for the channel
-  initial: 0, // The initial state
-  persist: true, // (Optional) Whether to persist the state to IndexedDB
+// 1. Create a new store instance. This should be done once and shared.
+const counterStore = new ChannelStore<number>({
+  // A unique name for the channel, used for BroadcastChannel and IndexedDB.
+  name: 'shared-counter',
+  // The initial state of the store if no persisted state is found.
+  initial: 0,
+  // Set to true to persist the state to IndexedDB.
+  persist: true,
 })
 
-// Get the current state
-const currentCount = countStore.get()
+// 2. Subscribe to status changes to know when the store is ready.
+// This is crucial when `persist` is true, as it takes time to load from IndexedDB.
+const unsubscribeStatus = counterStore.subscribeStatus((status) => {
+  console.log('Store status is now:', status)
 
-// Set a new state
-countStore.set(currentCount + 1)
+  // 3. Once the store is ready, you can safely interact with it.
+  if (status === 'ready') {
+    // Get the current state. This will be the persisted value if it exists.
+    const currentCount = counterStore.get()
+    console.log('Initial or persisted count:', currentCount)
 
-// Subscribe to state changes
-const unsubscribe = countStore.subscribe((newCount) => {
-  console.log('Count changed:', newCount)
+    // Set a new state. This will be broadcast to other tabs.
+    counterStore.set(currentCount + 1)
+  }
 })
 
-// Unsubscribe when you're done
-unsubscribe()
-
-// Subscribe to status changes
-const unsubscribeStatus = countStore.subscribeStatus((status) => {
-  console.log('Store status:', status)
+// 4. Subscribe to state changes from any tab.
+const unsubscribeState = counterStore.subscribe((newCount) => {
+  console.log('Count has changed to:', newCount)
+  // Here you would typically update your UI.
 })
 
-// Reset the store
-countStore.reset()
+// 5. It's important to clean up when your application or component unmounts.
+// The function below should be called from your framework's lifecycle hook
+// (e.g., `useEffect` in React, `onUnmounted` in Vue, `onDestroy` in Svelte).
+function cleanup() {
+  unsubscribeStatus()
+  unsubscribeState()
+  counterStore.destroy()
+}
 
-// Destroy the store
-countStore.destroy()
+// The line below is a generic example and is commented out because the specific
+// implementation depends on your application's architecture.
+// window.addEventListener('beforeunload', cleanup);
 ```
