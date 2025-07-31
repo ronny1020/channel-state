@@ -59,9 +59,9 @@
   },
   "devDependencies": {
     "@channel-state/core": "workspace:*",
-    "@testing-library/svelte": "^4.0.0",
+    "@testing-library/svelte": "^5.2.8",
     "@tsconfig/svelte": "^5.0.4",
-    "svelte": "^5.0.0"
+    "svelte": "^5.37.1"
   },
   "peerDependencies": {
     "@channel-state/core": "^0.0.3",
