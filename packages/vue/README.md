@@ -22,9 +22,41 @@
 
 ## 🛠️ Installation
 
+<details>
+<summary>npm</summary>
+
+```bash
+npm install @channel-state/core @channel-state/vue
+```
+
+</details>
+
+<details>
+<summary>yarn</summary>
+
+```bash
+yarn add @channel-state/core @channel-state/vue
+```
+
+</details>
+
+<details>
+<summary>pnpm</summary>
+
 ```bash
 pnpm add @channel-state/core @channel-state/vue
 ```
+
+</details>
+
+<details>
+<summary>bun</summary>
+
+```bash
+bun add @channel-state/core @channel-state/vue
+```
+
+</details>
 
 ## 🌐 CDN Usage
 

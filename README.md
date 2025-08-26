@@ -65,7 +65,46 @@ This repository is a monorepo containing the following packages:
 
 ## 🛠️ Installation
 
-Install the desired package(s) using your preferred package manager:
+<details>
+<summary>npm</summary>
+
+```bash
+# Install the core library
+npm install @channel-state/core
+
+# Install for React
+npm install @channel-state/core @channel-state/react
+
+# Install for Vue
+npm install @channel-state/core @channel-state/vue
+
+# Install for Svelte
+npm install @channel-state/core @channel-state/svelte
+```
+
+</details>
+
+<details>
+<summary>yarn</summary>
+
+```bash
+# Install the core library
+yarn add @channel-state/core
+
+# Install for React
+yarn add @channel-state/core @channel-state/react
+
+# Install for Vue
+yarn add @channel-state/core @channel-state/vue
+
+# Install for Svelte
+yarn add @channel-state/core @channel-state/svelte
+```
+
+</details>
+
+<details>
+<summary>pnpm</summary>
 
 ```bash
 # Install the core library
@@ -81,6 +120,27 @@ pnpm add @channel-state/core @channel-state/vue
 pnpm add @channel-state/core @channel-state/svelte
 ```
 
+</details>
+
+<details>
+<summary>bun</summary>
+
+```bash
+# Install the core library
+bun add @channel-state/core
+
+# Install for React
+bun add @channel-state/core @channel-state/react
+
+# Install for Vue
+bun add @channel-state/core @channel-state/vue
+
+# Install for Svelte
+bun add @channel-state/core @channel-state/svelte
+```
+
+</details>
+
 For detailed usage, please refer to the README file of the specific package you are using.
 
 ## 🌐 CDN Usage
@@ -91,6 +151,16 @@ For direct browser usage, you can use the UMD builds from a CDN like jsDelivr or
 - [`@channel-state/react` README](./packages/react/README.md#cdn-usage)
 - [`@channel-state/vue` README](./packages/vue/README.md#cdn-usage)
 - [`@channel-state/svelte` README](./packages/svelte/README.md#cdn-usage)
+
+## 🚀 Playground
+
+Explore and experiment with `channel-state` in a live environment using our interactive playground.
+
+- **[React Channel State Demo](https://stackblitz.com/edit/vitejs-vite-bez3gkrn)**
+
+This playground provides a simple example of how to use `@channel-state/core` and `@channel-state/react` together.
+
+> **Note:** To see the cross-tab state synchronization in action, open the preview in a new tab.
 
 ## 🤝 Contributing
 
