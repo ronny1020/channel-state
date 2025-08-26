@@ -22,9 +22,41 @@
 
 ## 🛠️ Installation
 
+<details>
+<summary>npm</summary>
+
+```bash
+npm install @channel-state/core @channel-state/react
+```
+
+</details>
+
+<details>
+<summary>yarn</summary>
+
+```bash
+yarn add @channel-state/core @channel-state/react
+```
+
+</details>
+
+<details>
+<summary>pnpm</summary>
+
 ```bash
 pnpm add @channel-state/core @channel-state/react
 ```
+
+</details>
+
+<details>
+<summary>bun</summary>
+
+```bash
+bun add @channel-state/core @channel-state/react
+```
+
+</details>
 
 ## 🌐 CDN Usage
 
@@ -36,6 +68,16 @@ For direct usage in the browser, you can use the UMD builds from a CDN like jsDe
 <script src="https://cdn.jsdelivr.net/npm/@channel-state/core@0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@channel-state/react@0"></script>
 ```
+
+## 🚀 Playground
+
+Explore and experiment with `@channel-state/react` in a live environment using our interactive playground.
+
+- **[React Channel State Demo](https://stackblitz.com/edit/vitejs-vite-bez3gkrn)**
+
+This playground provides a simple example of how to use `@channel-state/core` and `@channel-state/react` together.
+
+> **Note:** To see the cross-tab state synchronization in action, open the preview in a new tab.
 
 ## 📚 API Reference
 
