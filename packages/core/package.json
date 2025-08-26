@@ -1,6 +1,6 @@
 {
   "name": "@channel-state/core",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Core-library for channel-state, providing framework-agnostic, zero-dependency state management with cross-context synchronization and persistence.",
   "keywords": [
     "channel",

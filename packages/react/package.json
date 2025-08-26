@@ -1,6 +1,6 @@
 {
   "name": "@channel-state/react",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "React hooks for channel-state, providing seamless integration with React applications for cross-context state management.",
   "keywords": [
     "channel",
@@ -67,7 +67,7 @@
     "react-dom": "^18.2.0"
   },
   "peerDependencies": {
-    "@channel-state/core": "^0.0.3",
+    "@channel-state/core": "^0.0.4",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
   },
