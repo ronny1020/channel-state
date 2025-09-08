@@ -16,10 +16,14 @@
 
 /**
  * Represents the types of messages that can be sent between stores.
- * - 'STATE_REQUEST': A request for the current state of the store.
- * - 'STATE_UPDATE': An update to the state of the store.
+ * - 'REQUEST_INIT_STATE': A request from a new store instance asking for the current state.
+ * - 'RESPONSE_INIT_STATE': A response from an existing store, providing its state to the new instance.
+ * - 'STATE_UPDATE': A regular state update broadcast to all other stores.
  */
-export type StoreBroadcastMessageType = 'STATE_REQUEST' | 'STATE_UPDATE'
+export type StoreBroadcastMessageType =
+  | 'REQUEST_INIT_STATE'
+  | 'RESPONSE_INIT_STATE'
+  | 'STATE_UPDATE'
 
 /**
  * Represents a message sent between stores.
@@ -113,7 +117,7 @@ export class ChannelStore<T> {
     this._value = structuredClone(this._initial)
 
     this._channel = new BroadcastChannel(this._prefixedName)
-    this._channel.addEventListener('message', this._handleBroadcast)
+    this._channel.addEventListener('message', this._handleChannelMessage)
 
     if (this._persist) {
       this._initDB()
@@ -158,18 +162,16 @@ export class ChannelStore<T> {
 
     const req = store.get(this._dbKey) as IDBRequest<T>
     req.onsuccess = () => {
-      const val = req.result
-      if (val === undefined) {
-        // If no stored value, use initial value and set status to ready
-        this.status = 'ready'
-        this._notifySubscribers()
-        this._notifyStatusSubscribers()
-      } else {
-        this._value = val
-        this.status = 'ready'
-        this._notifySubscribers()
-        this._notifyStatusSubscribers()
+      if (this.status === 'ready') {
+        return
       }
+      const val = req.result
+      if (val !== undefined) {
+        this._value = val
+      }
+      this.status = 'ready'
+      this._notifySubscribers()
+      this._notifyStatusSubscribers()
     }
     req.onerror = () => {
       // If IndexedDB read fails, request from other tabs
@@ -182,7 +184,7 @@ export class ChannelStore<T> {
       return
     }
     this._channel.postMessage({
-      type: 'STATE_REQUEST',
+      type: 'REQUEST_INIT_STATE',
       senderId: this._instanceId,
     })
 
@@ -197,11 +199,16 @@ export class ChannelStore<T> {
   }
 
   /**
-   * Handles messages received from the BroadcastChannel, updating the cache and notifying subscribers.
+   * Processes messages received from the BroadcastChannel.
+   *
+   * This method handles three types of messages:
+   * - 'REQUEST_INIT_STATE': Responds to other tabs by sending the current state.
+   * - 'RESPONSE_INIT_STATE': Sets the store's initial state if the store is still 'initializing'.
+   * - 'STATE_UPDATE': Updates the store's state if the store is 'ready'.
    * @param messageEvent The MessageEvent containing the broadcasted data.
    * @private
    */
-  private _handleBroadcast = (
+  private _handleChannelMessage = (
     messageEvent: MessageEvent<StoreBroadcastMessage<T>>,
   ) => {
     if (this.status === 'destroyed') {
@@ -214,24 +221,37 @@ export class ChannelStore<T> {
       return // Ignore messages from self
     }
 
-    if (message.type === 'STATE_REQUEST') {
-      this._channel.postMessage({
-        type: 'STATE_UPDATE',
-        payload: this._value,
-        senderId: this._instanceId,
-      })
+    switch (message.type) {
+      case 'REQUEST_INIT_STATE':
+        this._channel.postMessage({
+          type: 'RESPONSE_INIT_STATE',
+          payload: this._value,
+          senderId: this._instanceId,
+        })
+        break
 
-      return
-    }
+      case 'RESPONSE_INIT_STATE':
+        // Only accept this if we are still initializing
+        if (this.status === 'initializing') {
+          if (this._initialStateRequestTimeout) {
+            clearTimeout(this._initialStateRequestTimeout)
+            this._initialStateRequestTimeout = null
+          }
+          this._value = message.payload
+          this.status = 'ready'
+          this._notifySubscribers()
+          this._notifyStatusSubscribers()
+        }
+        break
 
-    if (this._initialStateRequestTimeout) {
-      clearTimeout(this._initialStateRequestTimeout)
-      this._initialStateRequestTimeout = null
+      case 'STATE_UPDATE':
+        // Only accept this if we are already ready
+        if (this.status === 'ready') {
+          this._value = message.payload
+          this._notifySubscribers()
+        }
+        break
     }
-    this._value = message.payload
-    this.status = 'ready'
-    this._notifySubscribers()
-    this._notifyStatusSubscribers()
   }
 
   /**
@@ -276,14 +296,27 @@ export class ChannelStore<T> {
   }
 
   /**
-   * Sets the new value for the store's state, updates the value, and optionally persists it to IndexedDB asynchronously.
+   * Sets a new value for the store's state.
+   *
+   * This method updates the value, broadcasts the change to other tabs, and
+   * persists the new value to IndexedDB if persistence is enabled.
+   *
+   * If `set()` is called while the store is still `initializing`, it will
+   * immediately transition the store to the `ready` state with the new value,
+   * cancelling any pending initial state synchronization.
+   *
    * @param value The new state value to set.
-   * @returns A Promise that resolves when the state has been set and persisted (if applicable).
    */
   set(value: T): void {
     if (this.status === 'destroyed') {
       return
     }
+
+    if (this.status === 'initializing') {
+      this.status = 'ready'
+      this._notifyStatusSubscribers()
+    }
+
     this._value = value
 
     if (!this._persist || this._db === null) {

@@ -8,9 +8,11 @@ const mockClose = vi.fn()
 
 const mockIndexedDB = {
   open: vi.fn(() => ({
-    onupgradeneeded: null,
-    onsuccess: null,
-    onerror: null,
+    onupgradeneeded: null as
+      | ((this: IDBOpenDBRequest, ev: IDBVersionChangeEvent) => any)
+      | null,
+    onsuccess: null as ((this: IDBRequest, ev: Event) => any) | null,
+    onerror: null as ((this: IDBRequest, ev: Event) => any) | null,
     result: {
       objectStoreNames: {
         contains: vi.fn(() => true),
@@ -89,6 +91,9 @@ describe('ChannelStore', () => {
     const subscriber1 = vi.fn()
     store1.subscribe(subscriber1)
 
+    // Manually set the store to ready to simulate it has been initialized
+    store1.status = 'ready'
+
     // Simulate message from store2 to store1
     const messageEvent = new MessageEvent('message', {
       data: {
@@ -118,7 +123,7 @@ describe('ChannelStore', () => {
     // Simulate another tab responding with state
     const messageEvent = new MessageEvent('message', {
       data: {
-        type: 'STATE_UPDATE',
+        type: 'RESPONSE_INIT_STATE',
         payload: 10,
         senderId: 'some-other-id',
       },
@@ -232,5 +237,99 @@ describe('ChannelStore', () => {
     store.destroy()
     expect(mockClose).toHaveBeenCalledTimes(1) // Should not be called again
     expect(store.status).toBe('destroyed') // Status should remain destroyed
+  })
+
+  it('should ignore initial state response if set() is called first', () => {
+    const store = new ChannelStore({ name: 'test-store', initial: 0 })
+    const statusSubscriber = vi.fn()
+    store.subscribeStatus(statusSubscriber)
+
+    expect(store.status).toBe('initializing')
+
+    store.set(5)
+
+    expect(store.get()).toBe(5)
+    expect(store.status).toBe('ready')
+    expect(statusSubscriber).toHaveBeenCalledWith('ready')
+
+    // Simulate a late initial state response from another tab
+    const messageEvent = new MessageEvent('message', {
+      data: {
+        type: 'RESPONSE_INIT_STATE',
+        payload: 10,
+        senderId: 'some-other-id',
+      },
+    })
+    const eventHandler = mockAddEventListener.mock.calls[0][1] as EventListener
+    eventHandler(messageEvent)
+
+    // The value should not be overwritten
+    expect(store.get()).toBe(5)
+  })
+
+  it('should ignore persisted state if set() is called before DB read completes', () => {
+    // 1. Define the objects that will be returned by the mocks
+    const mockGetRequest = {
+      onsuccess: null as
+        | ((event: { target: { result: number } }) => void)
+        | null,
+      onerror: null,
+      result: 10,
+    }
+    const mockOpenRequest = {
+      onupgradeneeded: null,
+      onsuccess: null as (() => void) | null,
+      onerror: null,
+      result: {
+        objectStoreNames: {
+          contains: vi.fn(() => true),
+        },
+        createObjectStore: vi.fn(),
+        close: vi.fn(),
+        transaction: vi.fn(() => ({
+          objectStore: vi.fn(() => ({
+            get: vi.fn(() => mockGetRequest),
+            put: vi.fn(() => ({
+              onsuccess: null,
+              onerror: null,
+            })),
+          })),
+        })),
+      },
+    }
+
+    // 2. Set up the mock implementation
+    mockIndexedDB.open.mockImplementation(() => {
+      // Simulate async open
+      setTimeout(() => {
+        if (mockOpenRequest.onsuccess) {
+          mockOpenRequest.onsuccess()
+        }
+      }, 0)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return mockOpenRequest as any
+    })
+
+    // 3. Create the store. This will call open() and assign to onsuccess.
+    const store = new ChannelStore({
+      name: 'test-store',
+      initial: 0,
+      persist: true,
+    })
+    expect(store.status).toBe('initializing')
+
+    // 4. Set the value while the store is initializing
+    store.set(5)
+    expect(store.get()).toBe(5)
+    expect(store.status).toBe('ready')
+
+    // 5. Now, manually trigger the get onsuccess, which was assigned by _loadCacheFromDB
+    if (mockGetRequest.onsuccess) {
+      mockGetRequest.onsuccess({ target: mockGetRequest })
+    }
+    vi.runAllTimers()
+
+    // 6. The value should not have been overwritten
+    expect(store.get()).toBe(5)
   })
 })
