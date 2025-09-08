@@ -106,14 +106,14 @@ The primary class for creating and managing a synchronized state.
 
 #### Methods
 
-| Method              | Signature                                               | Description                                                                                                                           |
-| ------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `get()`             | `(): T`                                                 | Synchronously returns the current state.                                                                                              |
-| `set()`             | `(value: T): Promise<void>`                             | Asynchronously sets a new state, broadcasts it to other contexts, and persists it if `persist` is enabled.                            |
-| `subscribe()`       | `(callback: (value: T) => void): () => void`            | Subscribes to state changes. The callback receives the new state. Returns an `unsubscribe` function.                                  |
-| `subscribeStatus()` | `(callback: (status: StoreStatus) => void): () => void` | Subscribes to store status changes. The callback receives the new status. Returns an `unsubscribe` function.                          |
-| `destroy()`         | `(): void`                                              | Closes the `BroadcastChannel` and `IndexedDB` connections and cleans up all subscribers. The store instance cannot be used afterward. |
-| `reset()`           | `(): Promise<void>`                                     | Resets the state to its `initial` value and broadcasts the change.                                                                    |
+| Method              | Signature                                               | Description                                                                                                                                                              |
+| ------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `get()`             | `(): T`                                                 | Synchronously returns the current state.                                                                                                                                 |
+| `set()`             | `(value: T): void`                                      | Sets a new state, broadcasts it to other contexts, and persists it if `persist` is enabled. The method itself is synchronous, but persistence happens in the background. |
+| `subscribe()`       | `(callback: (value: T) => void): () => void`            | Subscribes to state changes. The callback receives the new state. Returns an `unsubscribe` function.                                                                     |
+| `subscribeStatus()` | `(callback: (status: StoreStatus) => void): () => void` | Subscribes to store status changes. The callback receives the new status. Returns an `unsubscribe` function.                                                             |
+| `destroy()`         | `(): void`                                              | Closes the `BroadcastChannel` and `IndexedDB` connections and cleans up all subscribers. The store instance cannot be used afterward.                                    |
+| `reset()`           | `(): Promise<void>`                                     | Resets the state to its `initial` value and broadcasts the change.                                                                                                       |
 
 ## 🚀 Example Usage
 
