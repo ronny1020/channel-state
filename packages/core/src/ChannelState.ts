@@ -15,26 +15,33 @@
  */
 
 /**
+ * Represents a message sent between stores.
+ * @template T The type of the payload.
+ * @remarks This interface is used for both sending and receiving messages between stores.
+ */
+export type StoreBroadcastMessage<T> =
+  | {
+      type: 'REQUEST_INIT_STATE'
+      senderId: string
+    }
+  | {
+      type: 'RESPONSE_INIT_STATE'
+      senderId: string
+      payload: T
+    }
+  | {
+      type: 'STATE_UPDATE'
+      senderId: string
+      payload: T
+    }
+
+/**
  * Represents the types of messages that can be sent between stores.
  * - 'REQUEST_INIT_STATE': A request from a new store instance asking for the current state.
  * - 'RESPONSE_INIT_STATE': A response from an existing store, providing its state to the new instance.
  * - 'STATE_UPDATE': A regular state update broadcast to all other stores.
  */
-export type StoreBroadcastMessageType =
-  | 'REQUEST_INIT_STATE'
-  | 'RESPONSE_INIT_STATE'
-  | 'STATE_UPDATE'
-
-/**
- * Represents a message sent between stores.
- * @template T The type of the payload.
- * @remarks This interface is used for both sending and receiving messages between stores.
- **/
-export interface StoreBroadcastMessage<T> {
-  type: StoreBroadcastMessageType
-  senderId: string
-  payload: T
-}
+export type StoreBroadcastMessageType = StoreBroadcastMessage<unknown>['type']
 
 /**
  * Represents the status of the ChannelStore.
@@ -53,6 +60,10 @@ export type StoreStatusCallback = (status: StoreStatus) => void
  * Callback function type for store changes.
  */
 type StoreChangeCallback<T> = (value: T) => void
+
+interface MarkReadyOptions {
+  notifySubscribers: boolean
+}
 
 /**
  * Options for configuring a ChannelStore instance.
@@ -76,6 +87,26 @@ export interface ChannelStoreOptions<T> {
   initial: T
 }
 
+function isAbortError(error: unknown): boolean {
+  return (
+    typeof DOMException !== 'undefined' &&
+    error instanceof DOMException &&
+    error.name === 'AbortError'
+  )
+}
+
+function promisifyIDBRequest<T>(request: IDBRequest<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    request.onsuccess = () => {
+      resolve(request.result)
+    }
+
+    request.onerror = () => {
+      reject(new Error(request.error?.message ?? 'unknown error'))
+    }
+  })
+}
+
 /**
  * A class that manages and shares state across different browser tabs or windows
  * using BroadcastChannel and IndexedDB for persistence.
@@ -94,9 +125,12 @@ export class ChannelStore<T> {
   private readonly _channel: BroadcastChannel
   private readonly _dbKey = 'state' // Fixed key for storing the single state object
   private readonly _prefixedName: string
-  private _instanceId: string
+  private readonly _instanceId = crypto.randomUUID()
   private _initialStateRequestTimeout: ReturnType<typeof setTimeout> | null =
     null
+  private readonly _leaderLockName: string
+  private _leaderLockHold: PromiseWithResolvers<void> | null = null
+  private _waitToBecomeLeaderAbortController: AbortController | null = null
 
   /**
    * The current status of the store.
@@ -112,7 +146,7 @@ export class ChannelStore<T> {
     this._persist = options.persist ?? false
     this._initial = options.initial
     this._prefixedName = `channel-state__${this._name}`
-    this._instanceId = crypto.randomUUID()
+    this._leaderLockName = `${this._prefixedName}__leader`
 
     this._value = structuredClone(this._initial)
 
@@ -122,11 +156,11 @@ export class ChannelStore<T> {
     if (this._persist) {
       this._initDB()
     } else {
-      this._requestInitialStateFromOtherTabs()
+      void this._initMemoryOnlyStore()
     }
   }
 
-  private _initDB() {
+  private _initDB(): void {
     if (this.status === 'destroyed') {
       return
     }
@@ -146,12 +180,11 @@ export class ChannelStore<T> {
 
     request.onerror = () => {
       console.error('IndexedDB init failed:', request.error)
-      this.status = 'ready' // Fallback to initial values cache
-      this._notifyStatusSubscribers()
+      this._markReady({ notifySubscribers: false }) // Fallback to initial values cache
     }
   }
 
-  private _loadCacheFromDB() {
+  private _loadCacheFromDB(): void {
     if (this.status === 'destroyed') {
       return
     }
@@ -169,17 +202,126 @@ export class ChannelStore<T> {
       if (val !== undefined) {
         this._value = val
       }
-      this.status = 'ready'
-      this._notifySubscribers()
-      this._notifyStatusSubscribers()
+      this._markReady({ notifySubscribers: true })
     }
     req.onerror = () => {
       // If IndexedDB read fails, request from other tabs
+      void this._initMemoryOnlyStore()
+    }
+  }
+
+  private async _initMemoryOnlyStore(): Promise<void> {
+    const checkDestroyed = () => {
+      if (this.status === 'destroyed') {
+        return true
+      }
+      return false
+    }
+
+    if (checkDestroyed()) {
+      return
+    }
+
+    const lockManager = this._getLockManager()
+
+    if (lockManager === null) {
+      this._requestInitialStateFromOtherTabs()
+      return
+    }
+
+    try {
+      const acquiredLock = await lockManager.request<Promise<boolean>>(
+        this._leaderLockName,
+        { ifAvailable: true },
+        async (lock) => {
+          if (this.status === 'destroyed' || lock === null) {
+            return false
+          }
+
+          await this._currentTabIsLeader()
+          return true
+        },
+      )
+
+      if (this.status === 'destroyed' || acquiredLock) {
+        return
+      }
+
+      if (this.status === 'initializing') {
+        this._requestInitialStateFromOtherTabs()
+      }
+
+      void this._waitToBecomeLeader(lockManager)
+    } catch (error: unknown) {
+      if (this.status === 'destroyed' || isAbortError(error)) {
+        return
+      }
+
       this._requestInitialStateFromOtherTabs()
     }
   }
 
-  private _requestInitialStateFromOtherTabs() {
+  private _getLockManager(): LockManager | null {
+    if (
+      typeof navigator === 'undefined' ||
+      typeof navigator.locks === 'undefined'
+    ) {
+      return null
+    }
+
+    return navigator.locks
+  }
+
+  private _currentTabIsLeader(): Promise<void> {
+    const leaderLockHold: PromiseWithResolvers<void> = Promise.withResolvers()
+    this._leaderLockHold = leaderLockHold
+
+    this._markReady({ notifySubscribers: true })
+
+    return leaderLockHold.promise.finally(() => {
+      // Not leader anymore
+      if (this._leaderLockHold === leaderLockHold) {
+        this._leaderLockHold = null
+      }
+    })
+  }
+
+  private async _waitToBecomeLeader(lockManager: LockManager): Promise<void> {
+    const shouldSkipWaiting =
+      this.status === 'destroyed' ||
+      this._leaderLockHold !== null ||
+      this._waitToBecomeLeaderAbortController !== null
+
+    if (shouldSkipWaiting) {
+      return
+    }
+
+    const abortController = new AbortController()
+    this._waitToBecomeLeaderAbortController = abortController
+
+    try {
+      await lockManager.request<Promise<void>>(
+        this._leaderLockName,
+        { signal: abortController.signal },
+        async (lock) => {
+          if (this.status === 'destroyed' || lock === null) {
+            return
+          }
+
+          this._waitToBecomeLeaderAbortController = null
+          await this._currentTabIsLeader()
+        },
+      )
+    } catch (error: unknown) {
+      if (this.status === 'destroyed' || isAbortError(error)) {
+        return
+      }
+
+      this._waitToBecomeLeaderAbortController = null
+    }
+  }
+
+  private _requestInitialStateFromOtherTabs(): void {
     if (this.status === 'destroyed') {
       return
     }
@@ -190,12 +332,53 @@ export class ChannelStore<T> {
 
     this._initialStateRequestTimeout = setTimeout(() => {
       if (this.status !== 'ready') {
-        this.status = 'ready'
-        this._notifySubscribers()
-        this._notifyStatusSubscribers()
+        this._markReady({ notifySubscribers: true })
       }
       this._initialStateRequestTimeout = null
-    }, 500) // Wait for 500ms for a response
+    }, 500) // Wait for 500ms for a response when another tab may exist or Web Locks are unavailable
+  }
+
+  private _clearInitialStateRequestTimeout(): void {
+    if (!this._initialStateRequestTimeout) {
+      return
+    }
+
+    clearTimeout(this._initialStateRequestTimeout)
+    this._initialStateRequestTimeout = null
+  }
+
+  private _markReady(options: MarkReadyOptions): void {
+    if (this.status !== 'initializing') {
+      return
+    }
+
+    this.status = 'ready'
+
+    if (options.notifySubscribers) {
+      this._notifySubscribers()
+    }
+
+    this._notifyStatusSubscribers()
+  }
+
+  private _shouldRespondToInitialStateRequest(): boolean {
+    if (this.status !== 'ready') {
+      return false
+    }
+
+    if (this._persist) {
+      return true
+    }
+
+    const lockManager = this._getLockManager()
+
+    // If locking isn't available, then always respond
+    if (lockManager === null) {
+      return true
+    }
+
+    // Only leader should respond
+    return this._leaderLockHold !== null
   }
 
   /**
@@ -210,7 +393,7 @@ export class ChannelStore<T> {
    */
   private _handleChannelMessage = (
     messageEvent: MessageEvent<StoreBroadcastMessage<T>>,
-  ) => {
+  ): void => {
     if (this.status === 'destroyed') {
       return
     }
@@ -223,24 +406,21 @@ export class ChannelStore<T> {
 
     switch (message.type) {
       case 'REQUEST_INIT_STATE':
-        this._channel.postMessage({
-          type: 'RESPONSE_INIT_STATE',
-          payload: this._value,
-          senderId: this._instanceId,
-        })
+        if (this._shouldRespondToInitialStateRequest()) {
+          this._channel.postMessage({
+            type: 'RESPONSE_INIT_STATE',
+            payload: this._value,
+            senderId: this._instanceId,
+          })
+        }
         break
 
       case 'RESPONSE_INIT_STATE':
         // Only accept this if we are still initializing
         if (this.status === 'initializing') {
-          if (this._initialStateRequestTimeout) {
-            clearTimeout(this._initialStateRequestTimeout)
-            this._initialStateRequestTimeout = null
-          }
+          this._clearInitialStateRequestTimeout()
           this._value = message.payload
-          this.status = 'ready'
-          this._notifySubscribers()
-          this._notifyStatusSubscribers()
+          this._markReady({ notifySubscribers: true })
         }
         break
 
@@ -258,13 +438,13 @@ export class ChannelStore<T> {
    * Notifies all registered subscribers about a change in the store's state.
    * @private
    */
-  private _notifySubscribers() {
+  private _notifySubscribers(): void {
     this._subscribers.forEach((subscriber) => {
       subscriber(this._value)
     })
   }
 
-  private _notifyStatusSubscribers() {
+  private _notifyStatusSubscribers(): void {
     this._statusSubscribers.forEach((subscriber) => {
       subscriber(this.status)
     })
@@ -275,7 +455,7 @@ export class ChannelStore<T> {
    * and notifying local subscribers.
    * @private
    */
-  private _triggerChange() {
+  private _triggerChange(): void {
     if (this.status === 'destroyed') {
       return
     }
@@ -285,6 +465,20 @@ export class ChannelStore<T> {
       senderId: this._instanceId,
     })
     this._notifySubscribers()
+  }
+
+  private async _persistValue(value: T): Promise<void> {
+    const db = this._db
+
+    if (!db) {
+      throw new Error('Database not initialized')
+    }
+
+    const tx = db.transaction(this._prefixedName, 'readwrite')
+    const store = tx.objectStore(this._prefixedName)
+    const req = store.put(value, this._dbKey)
+
+    await promisifyIDBRequest(req)
   }
 
   /**
@@ -313,8 +507,8 @@ export class ChannelStore<T> {
     }
 
     if (this.status === 'initializing') {
-      this.status = 'ready'
-      this._notifyStatusSubscribers()
+      this._clearInitialStateRequestTimeout()
+      this._markReady({ notifySubscribers: false })
     }
 
     this._value = value
@@ -324,26 +518,13 @@ export class ChannelStore<T> {
       return
     }
 
-    void new Promise<void>((resolve, reject) => {
-      const db = this._db
-
-      if (!db) {
-        reject(new Error('Database not initialized'))
-        return
-      }
-
-      const tx = db.transaction(this._prefixedName, 'readwrite')
-      const store = tx.objectStore(this._prefixedName)
-      const req = store.put(value, this._dbKey)
-
-      req.onsuccess = () => {
+    void this._persistValue(value)
+      .then(() => {
         this._triggerChange()
-        resolve()
-      }
-      req.onerror = () => {
-        reject(new Error(req.error?.message ?? 'unknown error'))
-      }
-    })
+      })
+      .catch((error: unknown) => {
+        console.error('IndexedDB write failed:', error)
+      })
   }
 
   /**
@@ -382,19 +563,27 @@ export class ChannelStore<T> {
    * Cleans up resources used by the ChannelStore, including closing the BroadcastChannel
    * and IndexedDB connection, and clearing subscribers.
    */
-  destroy() {
+  destroy(): void {
     if (this.status === 'destroyed') {
       return
     }
     this.status = 'destroyed'
     this._notifyStatusSubscribers()
+    this._channel.removeEventListener('message', this._handleChannelMessage)
     this._channel.close()
     this._subscribers.clear()
     this._statusSubscribers.clear()
     this._db?.close()
-    if (this._initialStateRequestTimeout) {
-      clearTimeout(this._initialStateRequestTimeout)
-      this._initialStateRequestTimeout = null
+    this._clearInitialStateRequestTimeout()
+
+    if (this._waitToBecomeLeaderAbortController) {
+      this._waitToBecomeLeaderAbortController.abort()
+      this._waitToBecomeLeaderAbortController = null
+    }
+
+    if (this._leaderLockHold) {
+      this._leaderLockHold.resolve()
+      this._leaderLockHold = null
     }
   }
 
@@ -402,36 +591,18 @@ export class ChannelStore<T> {
    * Resets the store's state to its initial value.
    * @returns A Promise that resolves when the state has been reset.
    */
-  reset(): Promise<void> {
+  async reset(): Promise<void> {
     if (this.status === 'destroyed') {
-      return Promise.resolve()
+      return
     }
     this._value = structuredClone(this._initial)
 
     if (!this._db) {
       this._triggerChange()
-      return Promise.resolve()
+      return
     }
 
-    return new Promise((resolve, reject) => {
-      const db = this._db
-
-      if (!db) {
-        reject(new Error('IndexedDB is not available'))
-        return
-      }
-
-      const tx = db.transaction(this._prefixedName, 'readwrite')
-      const store = tx.objectStore(this._prefixedName)
-      const req = store.put(this._initial, this._dbKey)
-
-      req.onsuccess = () => {
-        this._triggerChange()
-        resolve()
-      }
-      req.onerror = () => {
-        reject(new Error(req.error?.message ?? 'unknown error'))
-      }
-    })
+    await this._persistValue(this._value)
+    this._triggerChange()
   }
 }

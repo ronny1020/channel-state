@@ -35,6 +35,138 @@ const mockIndexedDB = {
   })),
 }
 
+interface MockLockManager {
+  readonly request: ReturnType<typeof vi.fn>
+}
+
+interface CreateMockLockManagerOptions {
+  initialLockAvailable: boolean
+}
+
+interface QueuedMockLockRequest {
+  readonly name: string
+  readonly callback: LockGrantedCallback<unknown>
+  readonly resolve: (value: unknown) => void
+  readonly reject: (reason?: unknown) => void
+  readonly signal: AbortSignal | undefined
+}
+
+async function flushPromises(): Promise<void> {
+  await Promise.resolve()
+  await Promise.resolve()
+}
+
+async function flushWebLockPromotion(): Promise<void> {
+  await flushPromises()
+  await flushPromises()
+  await flushPromises()
+}
+
+function setNavigatorLocks(locks: MockLockManager | undefined): void {
+  Object.defineProperty(globalThis.navigator, 'locks', {
+    configurable: true,
+    value: locks,
+  })
+}
+
+function createAbortError(): DOMException {
+  return new DOMException('Aborted', 'AbortError')
+}
+
+function createMockLockManager(
+  options: CreateMockLockManagerOptions,
+): MockLockManager {
+  let lockAvailable = options.initialLockAvailable
+  const queuedRequests: QueuedMockLockRequest[] = []
+
+  function grantNextQueuedLock(): void {
+    const queuedRequest = queuedRequests.shift()
+
+    if (!queuedRequest) {
+      lockAvailable = true
+      return
+    }
+
+    if (queuedRequest.signal?.aborted) {
+      queuedRequest.reject(createAbortError())
+      grantNextQueuedLock()
+      return
+    }
+
+    void grantLock(queuedRequest.name, queuedRequest.callback).then(
+      queuedRequest.resolve,
+      queuedRequest.reject,
+    )
+  }
+
+  async function grantLock<T>(
+    name: string,
+    callback: LockGrantedCallback<T>,
+  ): Promise<T> {
+    lockAvailable = false
+
+    try {
+      return await callback({ name, mode: 'exclusive' })
+    } finally {
+      grantNextQueuedLock()
+    }
+  }
+
+  async function enqueueLockRequest<T>(
+    name: string,
+    callback: LockGrantedCallback<T>,
+    signal: AbortSignal | undefined,
+  ): Promise<T> {
+    if (signal?.aborted) {
+      throw createAbortError()
+    }
+
+    return new Promise<T>((resolve, reject) => {
+      function handleAbort(): void {
+        reject(createAbortError())
+      }
+
+      signal?.addEventListener('abort', handleAbort, { once: true })
+
+      queuedRequests.push({
+        name,
+        callback,
+        resolve: resolve as (value: unknown) => void,
+        reject,
+        signal,
+      })
+    })
+  }
+
+  async function request<T>(
+    name: string,
+    requestOptions: LockOptions,
+    callback: LockGrantedCallback<T>,
+  ): Promise<T> {
+    if (requestOptions.signal?.aborted) {
+      throw createAbortError()
+    }
+
+    if (requestOptions.ifAvailable) {
+      if (!lockAvailable) {
+        return callback(null)
+      }
+
+      return grantLock(name, callback)
+    }
+
+    if (lockAvailable) {
+      return grantLock(name, callback)
+    }
+
+    return enqueueLockRequest(name, callback, requestOptions.signal)
+  }
+
+  return {
+    request: vi.fn(request),
+  }
+}
+
 Object.defineProperty(global, 'indexedDB', {
   writable: true,
   value: mockIndexedDB,
@@ -44,6 +176,7 @@ describe('ChannelStore', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
+    setNavigatorLocks(undefined)
     mockPostMessage.mockRestore()
     mockAddEventListener.mockRestore()
     mockRemoveEventListener.mockRestore()
@@ -62,6 +195,7 @@ describe('ChannelStore', () => {
   })
 
   afterEach(() => {
+    setNavigatorLocks(undefined)
     vi.useRealTimers()
   })
 
@@ -69,6 +203,231 @@ describe('ChannelStore', () => {
     const store = new ChannelStore({ name: 'test-store', initial: 0 })
     expect(store.get()).toBe(0)
     expect(mockIndexedDB.open).not.toHaveBeenCalled()
+  })
+
+  it('should skip initial state request when Web Locks prove this is the only memory-only store', async () => {
+    const lockManager = createMockLockManager({ initialLockAvailable: true })
+    setNavigatorLocks(lockManager)
+
+    const store = new ChannelStore({
+      name: 'test-store',
+      initial: 0,
+      persist: false,
+    })
+
+    await flushPromises()
+
+    expect(store.status).toBe('ready')
+    expect(mockPostMessage).not.toHaveBeenCalledWith({
+      type: 'REQUEST_INIT_STATE',
+      senderId: expect.any(String) as string,
+    })
+    expect(lockManager.request).toHaveBeenCalledWith(
+      'channel-state__test-store__leader',
+      { ifAvailable: true },
+      expect.any(Function),
+    )
+
+    store.destroy()
+  })
+
+  it('should request initial state when Web Locks indicate another memory-only store exists', async () => {
+    const lockManager = createMockLockManager({ initialLockAvailable: false })
+    setNavigatorLocks(lockManager)
+
+    const store = new ChannelStore({
+      name: 'test-store',
+      initial: 0,
+      persist: false,
+    })
+
+    await flushPromises()
+
+    expect(mockPostMessage).toHaveBeenCalledWith({
+      type: 'REQUEST_INIT_STATE',
+      senderId: expect.any(String) as string,
+    })
+    // 1st time for checking if lock is available
+    // 2nd time for queuing
+    expect(lockManager.request).toHaveBeenCalledTimes(2)
+
+    const messageEvent = new MessageEvent('message', {
+      data: {
+        type: 'RESPONSE_INIT_STATE',
+        payload: 10,
+        senderId: 'some-other-id',
+      },
+    })
+    const eventHandler = mockAddEventListener.mock.calls[0][1] as EventListener
+
+    eventHandler(messageEvent)
+    vi.runAllTimers()
+
+    expect(store.status).toBe('ready')
+    expect(store.get()).toBe(10)
+
+    store.destroy()
+  })
+
+  it('should only let the memory-only Web Locks leader answer initial state requests', async () => {
+    // current tab is follower
+    const lockManager = createMockLockManager({ initialLockAvailable: false })
+    setNavigatorLocks(lockManager)
+
+    const store = new ChannelStore({
+      name: 'test-store',
+      initial: 0,
+      persist: false,
+    })
+
+    await flushPromises()
+
+    const eventHandler = mockAddEventListener.mock.calls[0][1] as EventListener
+
+    // initalize current tab
+    eventHandler(
+      new MessageEvent('message', {
+        data: {
+          type: 'RESPONSE_INIT_STATE',
+          payload: 10,
+          senderId: 'leader-id',
+        },
+      }),
+    )
+
+    expect(store.status).toBe('ready')
+    expect(store.get()).toBe(10)
+
+    mockPostMessage.mockClear()
+
+    eventHandler(
+      new MessageEvent('message', {
+        data: {
+          type: 'REQUEST_INIT_STATE',
+          senderId: 'new-tab-id',
+        },
+      }),
+    )
+
+    // current tab ignores the request because it's not the leader
+    expect(mockPostMessage).not.toHaveBeenCalledWith({
+      type: 'RESPONSE_INIT_STATE',
+      payload: 10,
+      senderId: expect.any(String) as string,
+    })
+
+    store.destroy()
+  })
+
+  it('should let the memory-only Web Locks leader answer initial state requests', async () => {
+    const lockManager = createMockLockManager({ initialLockAvailable: true })
+    setNavigatorLocks(lockManager)
+
+    const store = new ChannelStore({
+      name: 'test-store',
+      initial: 0,
+      persist: false,
+    })
+
+    await flushPromises()
+    store.set(10)
+    mockPostMessage.mockClear()
+
+    const eventHandler = mockAddEventListener.mock.calls[0][1] as EventListener
+
+    eventHandler(
+      new MessageEvent('message', {
+        data: {
+          type: 'REQUEST_INIT_STATE',
+          senderId: 'new-tab-id',
+        },
+      }),
+    )
+
+    expect(mockPostMessage).toHaveBeenCalledWith({
+      type: 'RESPONSE_INIT_STATE',
+      payload: 10,
+      senderId: expect.any(String) as string,
+    })
+
+    store.destroy()
+  })
+
+  it('should appoint a queued memory-only store as the new Web Locks leader when the current leader is gone', async () => {
+    const lockManager = createMockLockManager({ initialLockAvailable: true })
+    setNavigatorLocks(lockManager)
+
+    const leaderStore = new ChannelStore({
+      name: 'test-store',
+      initial: 0,
+      persist: false,
+    })
+
+    await flushPromises()
+    leaderStore.set(10)
+
+    const queuedStore = new ChannelStore({
+      name: 'test-store',
+      initial: 0,
+      persist: false,
+    })
+
+    await flushPromises()
+
+    const queuedStoreEventHandler = mockAddEventListener.mock
+      .calls[1][1] as EventListener
+
+    queuedStoreEventHandler(
+      new MessageEvent('message', {
+        data: {
+          type: 'RESPONSE_INIT_STATE',
+          payload: 10,
+          senderId: 'leader-id',
+        },
+      }),
+    )
+
+    expect(queuedStore.status).toBe('ready')
+    expect(queuedStore.get()).toBe(10)
+
+    mockPostMessage.mockClear()
+
+    queuedStoreEventHandler(
+      new MessageEvent('message', {
+        data: {
+          type: 'REQUEST_INIT_STATE',
+          senderId: 'new-tab-before-promotion-id',
+        },
+      }),
+    )
+
+    expect(mockPostMessage).not.toHaveBeenCalledWith({
+      type: 'RESPONSE_INIT_STATE',
+      payload: 10,
+      senderId: expect.any(String) as string,
+    })
+
+    leaderStore.destroy()
+    await flushWebLockPromotion()
+    mockPostMessage.mockClear()
+
+    queuedStoreEventHandler(
+      new MessageEvent('message', {
+        data: {
+          type: 'REQUEST_INIT_STATE',
+          senderId: 'new-tab-after-promotion-id',
+        },
+      }),
+    )
+
+    // only leader respond to initial state requests
+    expect(mockPostMessage).toHaveBeenCalledWith({
+      type: 'RESPONSE_INIT_STATE',
+      payload: 10,
+      senderId: expect.any(String) as string,
+    })
+
+    queuedStore.destroy()
   })
 
   it('should update value and notify subscribers', () => {
