@@ -61,11 +61,6 @@ export type StoreStatusCallback = (status: StoreStatus) => void
  */
 type StoreChangeCallback<T> = (value: T) => void
 
-interface LeaderLockHold {
-  readonly promise: Promise<void>
-  readonly release: () => void
-}
-
 interface MarkReadyOptions {
   notifySubscribers: boolean
 }
@@ -92,22 +87,24 @@ export interface ChannelStoreOptions<T> {
   initial: T
 }
 
-function createLeaderLockHold(): LeaderLockHold {
-  let release!: () => void
-
-  const promise = new Promise<void>((resolve) => {
-    release = resolve
-  })
-
-  return { promise, release }
-}
-
 function isAbortError(error: unknown): boolean {
   return (
     typeof DOMException !== 'undefined' &&
     error instanceof DOMException &&
     error.name === 'AbortError'
   )
+}
+
+function promisifyIDBRequest<T>(request: IDBRequest<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    request.onsuccess = () => {
+      resolve(request.result)
+    }
+
+    request.onerror = () => {
+      reject(new Error(request.error?.message ?? 'unknown error'))
+    }
+  })
 }
 
 /**
@@ -132,7 +129,7 @@ export class ChannelStore<T> {
   private _initialStateRequestTimeout: ReturnType<typeof setTimeout> | null =
     null
   private readonly _leaderLockName: string
-  private _leaderLockHold: LeaderLockHold | null = null
+  private _leaderLockHold: PromiseWithResolvers<void> | null = null
   private _waitToBecomeLeaderAbortController: AbortController | null = null
 
   /**
@@ -159,7 +156,7 @@ export class ChannelStore<T> {
     if (this._persist) {
       this._initDB()
     } else {
-      this._initMemoryOnlyStore()
+      void this._initMemoryOnlyStore()
     }
   }
 
@@ -209,12 +206,19 @@ export class ChannelStore<T> {
     }
     req.onerror = () => {
       // If IndexedDB read fails, request from other tabs
-      this._initMemoryOnlyStore()
+      void this._initMemoryOnlyStore()
     }
   }
 
-  private _initMemoryOnlyStore(): void {
-    if (this.status === 'destroyed') {
+  private async _initMemoryOnlyStore(): Promise<void> {
+    const checkDestroyed = () => {
+      if (this.status === 'destroyed') {
+        return true
+      }
+      return false
+    }
+
+    if (checkDestroyed()) {
       return
     }
 
@@ -226,40 +230,33 @@ export class ChannelStore<T> {
     }
 
     try {
-      void lockManager
-        .request<Promise<boolean>>(
-          this._leaderLockName,
-          { ifAvailable: true },
-          async (lock) => {
-            if (this.status === 'destroyed' || lock === null) {
-              return false
-            }
-
-            await this._currentTabIsLeader()
-            return true
-          },
-        )
-        .then((acquiredLockPromise) => {
-          // Workaround for a TypeScript false positive that appears to be fixed in TS 6
-          const acquiredLock = acquiredLockPromise as unknown as boolean
-          if (this.status === 'destroyed' || acquiredLock) {
-            return
+      const acquiredLock = await lockManager.request<Promise<boolean>>(
+        this._leaderLockName,
+        { ifAvailable: true },
+        async (lock) => {
+          if (this.status === 'destroyed' || lock === null) {
+            return false
           }
 
-          if (this.status === 'initializing') {
-            this._requestInitialStateFromOtherTabs()
-          }
+          await this._currentTabIsLeader()
+          return true
+        },
+      )
 
-          this._waitToBecomeLeader(lockManager)
-        })
-        .catch((error: unknown) => {
-          if (this.status === 'destroyed' || isAbortError(error)) {
-            return
-          }
+      if (this.status === 'destroyed' || acquiredLock) {
+        return
+      }
 
-          this._requestInitialStateFromOtherTabs()
-        })
-    } catch {
+      if (this.status === 'initializing') {
+        this._requestInitialStateFromOtherTabs()
+      }
+
+      void this._waitToBecomeLeader(lockManager)
+    } catch (error: unknown) {
+      if (this.status === 'destroyed' || isAbortError(error)) {
+        return
+      }
+
       this._requestInitialStateFromOtherTabs()
     }
   }
@@ -276,7 +273,7 @@ export class ChannelStore<T> {
   }
 
   private _currentTabIsLeader(): Promise<void> {
-    const leaderLockHold = createLeaderLockHold()
+    const leaderLockHold: PromiseWithResolvers<void> = Promise.withResolvers()
     this._leaderLockHold = leaderLockHold
 
     this._markReady({ notifySubscribers: true })
@@ -289,12 +286,13 @@ export class ChannelStore<T> {
     })
   }
 
-  private _waitToBecomeLeader(lockManager: LockManager): void {
-    if (
+  private async _waitToBecomeLeader(lockManager: LockManager): Promise<void> {
+    const shouldSkipWaiting =
       this.status === 'destroyed' ||
       this._leaderLockHold !== null ||
       this._waitToBecomeLeaderAbortController !== null
-    ) {
+
+    if (shouldSkipWaiting) {
       return
     }
 
@@ -302,27 +300,23 @@ export class ChannelStore<T> {
     this._waitToBecomeLeaderAbortController = abortController
 
     try {
-      void lockManager
-        .request<unknown>(
-          this._leaderLockName,
-          { signal: abortController.signal },
-          async (lock) => {
-            if (this.status === 'destroyed' || lock === null) {
-              return
-            }
-
-            this._waitToBecomeLeaderAbortController = null
-            await this._currentTabIsLeader()
-          },
-        )
-        .catch((error: unknown) => {
-          if (this.status === 'destroyed' || isAbortError(error)) {
+      await lockManager.request<Promise<void>>(
+        this._leaderLockName,
+        { signal: abortController.signal },
+        async (lock) => {
+          if (this.status === 'destroyed' || lock === null) {
             return
           }
 
           this._waitToBecomeLeaderAbortController = null
-        })
-    } catch {
+          await this._currentTabIsLeader()
+        },
+      )
+    } catch (error: unknown) {
+      if (this.status === 'destroyed' || isAbortError(error)) {
+        return
+      }
+
       this._waitToBecomeLeaderAbortController = null
     }
   }
@@ -473,6 +467,20 @@ export class ChannelStore<T> {
     this._notifySubscribers()
   }
 
+  private async _persistValue(value: T): Promise<void> {
+    const db = this._db
+
+    if (!db) {
+      throw new Error('Database not initialized')
+    }
+
+    const tx = db.transaction(this._prefixedName, 'readwrite')
+    const store = tx.objectStore(this._prefixedName)
+    const req = store.put(value, this._dbKey)
+
+    await promisifyIDBRequest(req)
+  }
+
   /**
    * Synchronously retrieves the current state from the cache.
    * @returns The current state of the store.
@@ -510,26 +518,13 @@ export class ChannelStore<T> {
       return
     }
 
-    void new Promise<void>((resolve, reject) => {
-      const db = this._db
-
-      if (!db) {
-        reject(new Error('Database not initialized'))
-        return
-      }
-
-      const tx = db.transaction(this._prefixedName, 'readwrite')
-      const store = tx.objectStore(this._prefixedName)
-      const req = store.put(value, this._dbKey)
-
-      req.onsuccess = () => {
+    void this._persistValue(value)
+      .then(() => {
         this._triggerChange()
-        resolve()
-      }
-      req.onerror = () => {
-        reject(new Error(req.error?.message ?? 'unknown error'))
-      }
-    })
+      })
+      .catch((error: unknown) => {
+        console.error('IndexedDB write failed:', error)
+      })
   }
 
   /**
@@ -587,7 +582,7 @@ export class ChannelStore<T> {
     }
 
     if (this._leaderLockHold) {
-      this._leaderLockHold.release()
+      this._leaderLockHold.resolve()
       this._leaderLockHold = null
     }
   }
@@ -596,36 +591,18 @@ export class ChannelStore<T> {
    * Resets the store's state to its initial value.
    * @returns A Promise that resolves when the state has been reset.
    */
-  reset(): Promise<void> {
+  async reset(): Promise<void> {
     if (this.status === 'destroyed') {
-      return Promise.resolve()
+      return
     }
     this._value = structuredClone(this._initial)
 
     if (!this._db) {
       this._triggerChange()
-      return Promise.resolve()
+      return
     }
 
-    return new Promise((resolve, reject) => {
-      const db = this._db
-
-      if (!db) {
-        reject(new Error('IndexedDB is not available'))
-        return
-      }
-
-      const tx = db.transaction(this._prefixedName, 'readwrite')
-      const store = tx.objectStore(this._prefixedName)
-      const req = store.put(this._value, this._dbKey)
-
-      req.onsuccess = () => {
-        this._triggerChange()
-        resolve()
-      }
-      req.onerror = () => {
-        reject(new Error(req.error?.message ?? 'unknown error'))
-      }
-    })
+    await this._persistValue(this._value)
+    this._triggerChange()
   }
 }
